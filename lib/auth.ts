@@ -90,9 +90,9 @@ export async function loginClinic(data: LoginData) {
     try {
         const response = await api.post<LoginResponse>("/auth/clinic/login", data);
         
-        // Store the token in localStorage
+        // Store the clinic_token in localStorage
         if (response.data.token) {
-            localStorage.setItem("token", response.data.token);
+            localStorage.setItem("clinic_token", response.data.token);
         }
         
         return response.data;
@@ -135,24 +135,37 @@ export async function loginClinic(data: LoginData) {
     }
 }
 
-// Optional: Create a logout function
-export function logoutClinic() {
-    localStorage.removeItem("token");
-    // Optional: redirect to login page
-    // window.location.href = "/login";
+// Updated logout function with clinic_token
+export async function logoutClinic(): Promise<void> {
+    try {
+        // Attempt to call logout endpoint if it exists
+        await api.post("/auth/clinic/logout");
+    } catch (error) {
+        // Ignore errors from logout endpoint - we still want to clear local state
+        console.error("Logout API error (ignoring):", error);
+    } finally {
+        // Always clear local storage and any auth data
+        if (typeof window !== "undefined") {
+            localStorage.removeItem("clinic_token");
+            sessionStorage.clear();
+            // Clear any other auth-related data
+            localStorage.removeItem("user");
+            localStorage.removeItem("clinic");
+        }
+    }
 }
 
-// Optional: Get current token
-export function getToken(): string | null {
+// Optional: Get current clinic token
+export function getClinicToken(): string | null {
     if (typeof window !== "undefined") {
-        return localStorage.getItem("token");
+        return localStorage.getItem("clinic_token");
     }
     return null;
 }
 
-// Optional: Check if user is logged in
-export function isAuthenticated(): boolean {
-    return !!getToken();
+// Optional: Check if clinic is logged in
+export function isClinicAuthenticated(): boolean {
+    return !!getClinicToken();
 }
 
 export function handleApiError(error: unknown): { message: string; status: number; errors?: Record<string, string[]> } {
@@ -160,6 +173,12 @@ export function handleApiError(error: unknown): { message: string; status: numbe
         const axiosError = error as AxiosError<ApiErrorResponse>;
         
         if (axiosError.response) {
+            // Handle unauthorized (token expired)
+            if (axiosError.response.status === 401) {
+                // Auto logout if token expired
+                logoutClinic();
+            }
+            
             return {
                 status: axiosError.response.status,
                 message: axiosError.response.data?.message || axiosError.response.data?.error || "Request failed",
@@ -182,4 +201,22 @@ export function handleApiError(error: unknown): { message: string; status: numbe
         status: 500,
         message: error instanceof Error ? error.message : "An unexpected error occurred",
     };
+}
+
+// Optional: Refresh token function
+export async function refreshClinicToken(): Promise<string | null> {
+    try {
+        const response = await api.post<{ token: string }>("/auth/clinic/refresh-token");
+        const newToken = response.data.token;
+        
+        if (newToken && typeof window !== "undefined") {
+            localStorage.setItem("clinic_token", newToken);
+        }
+        
+        return newToken;
+    } catch (error) {
+        console.error("Failed to refresh token:", error);
+        await logoutClinic();
+        return null;
+    }
 }

@@ -2,6 +2,7 @@
 "use client";
 
 import { loginClinic } from "@/lib/auth";
+import { getUser } from "@/lib/user";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -9,6 +10,8 @@ import {
     Eye,
     EyeOff,
 } from "lucide-react";
+import { toast } from "sonner";
+import { useAuthStore } from "@/store/useStore";
 
 interface LoginError {
     status: number;
@@ -16,7 +19,6 @@ interface LoginError {
     errors?: Record<string, string[]>;
 }
 
-// Type predicate to check if error is LoginError
 function isLoginError(error: unknown): error is LoginError {
     return (
         typeof error === 'object' &&
@@ -33,6 +35,7 @@ export default function LoginComp() {
     const [error, setError] = useState<string>("");
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const { setClinicToken, setProfile } = useAuthStore(); // Updated to setClinicToken
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -40,7 +43,25 @@ export default function LoginComp() {
         setLoading(true);
 
         try {
-            await loginClinic({ email, password });
+            // 1. Login to get token
+            const loginResponse = await loginClinic({ email, password });
+            console.log("Login response:", loginResponse);
+            
+            // 2. Store the clinic_token
+            if (loginResponse.token) {
+                setClinicToken(loginResponse.token); // Updated to setClinicToken
+                console.log("Clinic token stored:", loginResponse.token);
+            }
+            
+            // 3. Fetch clinic profile using the token
+            const profile = await getUser();
+            console.log("Fetched profile:", profile);
+            console.log("Profile clinicName:", profile?.clinicName);
+            
+            // 4. Store the profile in Zustand
+            setProfile(profile);
+            
+            toast.success("Login successful!");
             router.push("/dashboard");
         } catch (error) {
             console.error("Login error:", error);
@@ -48,13 +69,17 @@ export default function LoginComp() {
             if (isLoginError(error)) {
                 if (error.status === 401) {
                     setError("Invalid email or password");
+                    toast.error("Invalid email or password");
                 } else if (error.status === 0) {
                     setError("Unable to connect to server. Please check your connection.");
+                    toast.error("Unable to connect to server. Please check your connection.");
                 } else {
                     setError(error.message || "Login failed. Please try again.");
+                    toast.error(error.message || "Login failed. Please try again.");
                 }
             } else {
                 setError("An unexpected error occurred");
+                toast.error("An unexpected error occurred");
             }
         } finally {
             setLoading(false);
@@ -62,6 +87,7 @@ export default function LoginComp() {
     };
 
     return (
+        // ... rest of your JSX remains the same
         <main className="min-h-screen flex items-center justify-center bg-bg-clr">
             <div className="w-full max-w-md p-8 space-y-6 bg-pry-clr rounded-lg shadow-md">
                 <div className="text-center">

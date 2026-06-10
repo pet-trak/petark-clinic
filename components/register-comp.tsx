@@ -382,7 +382,7 @@ export default function RegisterComp() {
                                         onChange={(e) => setAddress({...address, city: e.target.value})}
                                         required
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-acc-clr focus:border-transparent transition-all duration-200"
-                                        placeholder="New York"
+                                        placeholder="Port Harcourt"
                                     />
                                 </div>
                                 <div>
@@ -393,7 +393,7 @@ export default function RegisterComp() {
                                         onChange={(e) => setAddress({...address, state: e.target.value})}
                                         required
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-acc-clr focus:border-transparent transition-all duration-200"
-                                        placeholder="NY"
+                                        placeholder="Rivers"
                                     />
                                 </div>
                             </div>
@@ -418,7 +418,7 @@ export default function RegisterComp() {
                                         onChange={(e) => setAddress({...address, country: e.target.value})}
                                         required
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-acc-clr focus:border-transparent transition-all duration-200"
-                                        placeholder="United States"
+                                        placeholder="Nigeria"
                                     />
                                 </div>
                             </div>

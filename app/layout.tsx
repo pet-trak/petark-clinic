@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
+import { Toaster } from "sonner"; // import Toaster
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Pettraq",
-  description:
-    "Pettraq",
+  description: "Pettraq",
 }
 
 export default function RootLayout({
@@ -25,10 +25,14 @@ export default function RootLayout({
         <link href="https://fonts.cdnfonts.com/css/google-sans"
           rel="stylesheet"
         />
-
       </head>
       <body>
         {children}
+        <Toaster 
+          position="top-right"
+          richColors
+          closeButton
+        />
       </body>
     </html>
   );
