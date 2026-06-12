@@ -3,10 +3,10 @@
 // components/clinic/get-appointments.tsx
 
 import { useEffect, useState } from "react";
-import { getAppointments, type Appointment, type DateRange, type AppointmentsPage, type AppointmentPet } from "@/lib/appointment";
+import { getAppointments, type Appointment, type DateRange, type AppointmentsPage } from "@/lib/appointment";
 import { useAppointmentsContext } from "@/context/appointments-context";
 import VisitBtn from "@/components/clinic/visit-btn";
-import { CalendarDays, Clock, AlertCircle, RefreshCw, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { CalendarDays, Clock, AlertCircle, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 
 const STATUS_STYLES: Record<Appointment["status"], string> = {
     pending:   "bg-yellow-50 text-yellow-700 border border-yellow-200",
@@ -50,12 +50,11 @@ function SkeletonRow() {
 const EMPTY_PAGE: AppointmentsPage = { appointments: [], total: 0, page: 1, totalPages: 1, count: 0 };
 
 export default function GetAppointments() {
-    const [data, setData]         = useState<AppointmentsPage>(EMPTY_PAGE);
-    const [loading, setLoading]   = useState(true);
-    const [error, setError]       = useState<string | null>(null);
-    const [page, setPage]         = useState(1);
-    const [range, setRange]       = useState<DateRange>("all");
-    const [refreshKey, setRefreshKey] = useState(0);
+    const [data, setData] = useState<AppointmentsPage>(EMPTY_PAGE);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [page, setPage] = useState(1);
+    const [range, setRange] = useState<DateRange>("all");
 
     const { setAppointments: setCtxAppointments } = useAppointmentsContext();
 
@@ -80,9 +79,8 @@ export default function GetAppointments() {
 
         fetch();
         return () => { cancelled = true; };
-    }, [page, range, refreshKey]);
+    }, [page, range]);
 
-    // Reset to page 1 when range changes
     function handleRangeChange(next: DateRange) {
         setPage(1);
         setRange(next);
@@ -93,39 +91,30 @@ export default function GetAppointments() {
     const hasNext = page < totalPages;
 
     return (
-        <section className="space-y-4">
-            {/* Header */}
+        <section className="space-y-4 w-full pry-ff">
+            {/* Header with filter */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-lg font-semibold text-gray-900">Appointments</h2>
+                    <h2 className="text-lg font-semibold text-sec-clr pry-ff">Appointments</h2>
                     {!loading && !error && (
                         <p className="text-sm text-gray-500 mt-0.5">
                             {total} appointment{total !== 1 ? "s" : ""}
                         </p>
                     )}
                 </div>
-                <button
-                    onClick={() => setRefreshKey((k) => k + 1)}
-                    disabled={loading}
-                    className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 disabled:opacity-40 transition-colors"
-                >
-                    <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-                    Refresh
-                </button>
-            </div>
-
-            {/* Date range filter */}
-            <div className="relative w-fit">
-                <select
-                    value={range}
-                    onChange={(e) => handleRangeChange(e.target.value as DateRange)}
-                    className="appearance-none pl-3 pr-8 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors cursor-pointer"
-                >
-                    {DATE_RANGES.map(({ label, value }) => (
-                        <option key={value} value={value}>{label}</option>
-                    ))}
-                </select>
-                <ChevronDown size={12} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                
+                <div className="relative w-fit">
+                    <select
+                        value={range}
+                        onChange={(e) => handleRangeChange(e.target.value as DateRange)}
+                        className="appearance-none pl-3 pr-8 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors cursor-pointer"
+                    >
+                        {DATE_RANGES.map(({ label, value }) => (
+                            <option key={value} value={value}>{label}</option>
+                        ))}
+                    </select>
+                    <ChevronDown size={12} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                </div>
             </div>
 
             {/* Error */}
@@ -136,9 +125,9 @@ export default function GetAppointments() {
                 </div>
             )}
 
-            {/* Table */}
-            <div className="rounded-xl border border-gray-200 overflow-hidden">
-                <table className="w-full text-sm">
+            {/* Table with horizontal scroll */}
+            <div className="rounded-xl border border-gray-200 overflow-x-auto">
+                <table className="min-w-[800px] w-full text-sm">
                     <thead>
                         <tr className="bg-gray-50 border-b border-gray-200 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
                             <th className="px-4 py-3">Date</th>

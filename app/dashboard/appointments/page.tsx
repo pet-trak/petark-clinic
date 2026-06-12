@@ -4,6 +4,7 @@ import { AppointmentsProvider } from "@/context/appointments-context";
 import AppointmentHeader from "@/components/clinic/appointment-header";
 import AppointmentStats from "@/components/clinic/appointment-stats";
 import GetAppointments from "@/components/clinic/get-appointments";
+import GetVisits from "@/components/clinic/get-visits";
 
 export const metadata: Metadata = {
     title: "Appointments",
@@ -13,10 +14,19 @@ export const metadata: Metadata = {
 export default function AppointmentsPage() {
     return (
         <AppointmentsProvider>
-            <div className="px-8 py-8 space-y-10">
+            <div className="px-8 py-8 space-y-10 pry-ff">
                 <AppointmentHeader />
                 <AppointmentStats />
-                <GetAppointments />
+                
+                {/* Two column layout: GetVisits (left) + GetAppointments (right) */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <GetAppointments />
+                    </div>
+                    <div>
+                        <GetVisits />
+                    </div>
+                </div>
             </div>
         </AppointmentsProvider>
     );

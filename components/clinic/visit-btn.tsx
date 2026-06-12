@@ -42,7 +42,7 @@ export default function VisitBtn({ appointmentId, status }: Readonly<VisitBtnPro
         <button
             onClick={handleCreateVisit}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-medium hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-acc-clr text-black-clr  text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap hover:bg-acc-clr/90 hover:text-sec-clr cursor-pointer"
         >
             {loading ? "Creating..." : "Create Visit"}
         </button>

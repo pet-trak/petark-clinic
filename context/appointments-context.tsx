@@ -14,7 +14,7 @@ interface AppointmentsContextValue {
 
 const AppointmentsContext = createContext<AppointmentsContextValue | null>(null);
 
-export function AppointmentsProvider({ children }: { children: ReactNode }) {
+export function AppointmentsProvider({ children }: Readonly<{ children: ReactNode }>) {
     const [stats, setStats]             = useState<AppointmentStats | null>(null);
     const [appointments, setAppointments] = useState<Appointment[]>([]);
 

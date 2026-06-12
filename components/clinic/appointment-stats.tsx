@@ -3,8 +3,18 @@
 // components/clinic/appointment-stats.tsx
 
 import { useEffect, useState } from "react";
-import { getAppointmentStats, type AppointmentStats } from "@/lib/appointment";
-import { CalendarDays, Users, Clock, TrendingUp, TrendingDown } from "lucide-react";
+import {
+    Users,
+    CalendarDays,
+    FileText,
+    TrendingUp,
+    TrendingDown,
+} from "lucide-react";
+
+import {
+    getAppointmentStats,
+    type AppointmentStats,
+} from "@/lib/appointment";
 
 import { useAppointmentsContext } from "@/context/appointments-context";
 
@@ -19,66 +29,77 @@ const EMPTY_STATS: AppointmentStats = {
 
 function SkeletonCard() {
     return (
-        <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-3">
-            <div className="h-3 w-24 bg-gray-100 rounded animate-pulse" />
-            <div className="h-8 w-16 bg-gray-100 rounded animate-pulse" />
-            <div className="h-3 w-32 bg-gray-100 rounded animate-pulse" />
+        <div className="flex items-center gap-4 rounded-xl bg-white border border-gray-100 px-6 py-5 animate-pulse">
+            <div className="w-12 h-12 rounded-lg bg-gray-100" />
+            <div className="space-y-2">
+                <div className="h-3 w-28 bg-gray-100 rounded" />
+                <div className="h-7 w-20 bg-gray-100 rounded" />
+            </div>
         </div>
     );
 }
 
 interface StatCardProps {
     icon: React.ReactNode;
+    iconBg: string;
     label: string;
-    value: number | string;
-    sub: React.ReactNode;
+    value: number;
+    trend: number;
 }
 
-function StatCard({ icon, label, value, sub }: StatCardProps) {
+function StatCard({
+    icon,
+    iconBg,
+    label,
+    value,
+    trend,
+}: Readonly<StatCardProps>) {
+    const isPositive = trend >= 0;
+
     return (
-        <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-2">
-            <div className="flex items-center gap-2 text-gray-400 text-xs font-medium uppercase tracking-wide">
+        <div className="flex items-center gap-4 rounded-xl bg-pry-clr border border-gray-100 px-6 py-8 shadow-sm pry-ff">
+            {/* Icon */}
+            <div
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${iconBg}`}
+            >
                 {icon}
-                {label}
             </div>
-            <p className="text-3xl font-semibold text-gray-900">{value}</p>
-            <div className="text-xs text-gray-500">{sub}</div>
+
+            {/* Text */}
+            <div className="flex flex-col">
+                <span className="text-xs font-semibold tracking-wide text-gray-500">
+                    {label}
+                </span>
+                <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-gray-900">
+                        {value.toLocaleString()}
+                    </span>
+                    <span
+                        className={`flex items-center gap-0.5 text-xs font-medium ${
+                            isPositive ? "text-green-600" : "text-red-500"
+                        }`}
+                    >
+                        {isPositive ? (
+                            <TrendingUp size={13} />
+                        ) : (
+                            <TrendingDown size={13} />
+                        )}
+                        {Math.abs(trend)}%
+                    </span>
+                </div>
+            </div>
         </div>
     );
 }
 
-interface TrendBadgeProps {
-    pct: number;
-    positiveIsGood?: boolean;
-}
-
-function TrendBadge({ pct, positiveIsGood = true }: TrendBadgeProps) {
-    const isUp = pct >= 0;
-    const isGood = positiveIsGood ? isUp : !isUp;
-
-    const colorClass = isGood
-        ? "text-green-600 bg-green-50 border-green-200"
-        : "text-red-600 bg-red-50 border-red-200";
-
-    return (
-        <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md border text-xs font-medium ${colorClass}`}>
-            {isUp
-                ? <TrendingUp size={11} />
-                : <TrendingDown size={11} />
-            }
-            {Math.abs(pct)}%
-        </span>
-    );
-}
-
 export default function AppointmentStats() {
-    const [stats, setStats]     = useState<AppointmentStats>(EMPTY_STATS);
+    const [stats, setStats] = useState<AppointmentStats>(EMPTY_STATS);
     const [loading, setLoading] = useState(true);
     const { setStats: setCtxStats } = useAppointmentsContext();
 
     useEffect(() => {
         let cancelled = false;
-
+        
         async function fetchStats() {
             setLoading(true);
             try {
@@ -88,19 +109,23 @@ export default function AppointmentStats() {
                     setCtxStats(data);
                 }
             } catch {
-                // stats are non-critical — fail silently, show zeros
+                // fallback to empty stats
             } finally {
-                if (!cancelled) setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                }
             }
         }
 
         fetchStats();
-        return () => { cancelled = true; };
-    }, []);
+        return () => {
+            cancelled = true;
+        };
+    }, [setCtxStats]);
 
     if (loading) {
         return (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <SkeletonCard />
                 <SkeletonCard />
                 <SkeletonCard />
@@ -109,34 +134,27 @@ export default function AppointmentStats() {
     }
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <StatCard
-                icon={<CalendarDays size={13} />}
-                label="Today"
+                icon={<Users size={20} className="text-green-600" />}
+                iconBg="bg-green-100"
+                label="TOTAL PATIENTS"
+                value={stats.total}
+                trend={stats.weekChange}
+            />
+            <StatCard
+                icon={<CalendarDays size={20} className="text-blue-600" />}
+                iconBg="bg-blue-100"
+                label="APPOINTMENTS TODAY"
                 value={stats.today}
-                sub="Appointments scheduled for today"
+                trend={stats.weekChange}
             />
             <StatCard
-                icon={<Users size={13} />}
-                label="Patients this week"
-                value={stats.thisWeek}
-                sub={
-                    <span className="flex items-center gap-1.5">
-                        <TrendBadge pct={stats.weekChange} positiveIsGood={true} />
-                        <span>vs last week</span>
-                    </span>
-                }
-            />
-            <StatCard
-                icon={<Clock size={13} />}
-                label="Pending records"
+                icon={<FileText size={20} className="text-orange-600" />}
+                iconBg="bg-orange-100"
+                label="PENDING RECORDS"
                 value={stats.pending}
-                sub={
-                    <span className="flex items-center gap-1.5">
-                        <TrendBadge pct={stats.pendingPct} positiveIsGood={false} />
-                        <span>of all appointments</span>
-                    </span>
-                }
+                trend={stats.pendingPct}
             />
         </div>
     );

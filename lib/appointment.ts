@@ -73,7 +73,7 @@ export interface AppointmentStats {
 
 export async function getAppointmentStats(): Promise<AppointmentStats> {
     try {
-        const response = await api.get<{ status: string; stats: AppointmentStats }>("/appointment/clinics/stats");
+        const response = await api.get<{ status: string; stats: AppointmentStats }>("/appointment/stats");
         return response.data.stats;
     } catch (error) {
         if (axiosError.isAxiosError(error)) {

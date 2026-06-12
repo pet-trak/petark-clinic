@@ -1,0 +1,113 @@
+// lib/visit.ts
+
+import api from "./api";
+import axiosError from "axios";
+
+interface Vitals {
+    weight: number; // in kg
+    temp: number; // in °C
+    pulse: number; // in bpm
+    respiration: number; // in breaths per minute
+    appetite: string;
+    activity: string;
+}
+
+interface Billing {
+    professionalFee: number;
+    vat: number;
+    total: number;
+}
+
+interface Pet {
+    _id: string;
+    name: string;
+    species: string;
+    breed: string;
+    age: string;
+    weight: string; // in kg
+    gender: 'male' | 'female';
+    photo?: string;
+}
+
+interface Vet {
+    _id: string;
+    name?: string;
+}
+
+interface ApiVisitResponse {
+    _id: string;
+    appointmentId: string;
+    petId: string;
+    userId: string;
+    clinicId: string;
+    vetId: string | null;
+    status: "in-progress" | "completed";
+    vitals: Vitals;
+    notes?: string;
+    billing: Billing;
+    paymentStatus: 'unpaid' | 'paid' | 'failed' | 'refunded';
+    createdAt: string;
+    completedAt: string | null;
+    pet: Pet;  // Changed from Pet[] to Pet (object, not array)
+    vet?: Vet;
+}
+
+export interface Visit extends ApiVisitResponse {
+    administeredBy: string;
+}
+
+interface GetVisitResponse {
+    status: string;
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    results: number;
+    data: ApiVisitResponse[];
+}
+
+export async function getVisit(): Promise<Visit[]> {
+    try {
+        const response = await api.get<GetVisitResponse>("/visit/clinic");
+        
+        const visits: Visit[] = response.data.data.map((visit: ApiVisitResponse) => ({
+            ...visit,
+            administeredBy: visit.vetId ? "Vet" : "Clinic"
+        }));
+        
+        return visits;
+    } catch (error) {
+        if (axiosError.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || "Failed to fetch visit");
+        }
+        throw new Error("An unexpected error occurred while fetching visit");
+    }
+}
+
+export async function getSingleVisit(visitId: string): Promise<Visit> {
+    try {
+        const response = await api.get<{ data: ApiVisitResponse }>(`/visit/clinic/${visitId}`);
+        
+        const visit: Visit = {
+            ...response.data.data,
+            administeredBy: response.data.data.vetId ? "Vet" : "Clinic"
+        };
+        
+        return visit;
+    } catch (error) {
+        if (axiosError.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || "Failed to fetch visit");
+        }
+        throw new Error("An unexpected error occurred while fetching visit");
+    }
+}
+
+export function getAdministeredByDisplay(visit: Visit): string {
+    if (visit.vetId && visit.vet?.name) {
+        return `Dr. ${visit.vet.name}`;
+    }
+    if (visit.vetId) {
+        return "Veterinarian";
+    }
+    return "Clinic Staff";
+}
