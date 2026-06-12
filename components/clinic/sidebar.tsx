@@ -68,7 +68,7 @@ export function MobileTopBar() {
             priority
           />
           <span className="text-lg font-bold text-gray-800 tracking-tight pry-ff">
-            PetTrak
+            PetArk
           </span>
         </Link>
 
@@ -103,7 +103,7 @@ export function MobileTopBar() {
                     {profile?.clinicName || "Pet Owner"}
                   </p>
                   <p className="text-xs text-gray-500 truncate mt-0.5">
-                    {profile?.email || "pettraq@example.com"}
+                    {profile?.email || "petark@example.com"}
                   </p>
                 </div>
                 <div className="py-1">
@@ -192,7 +192,7 @@ export function Sidebar() {
           />
           {!isCollapsed && (
             <span className="text-lg font-bold text-gray-800 tracking-tight">
-              PetTrak
+              PetArk
             </span>
           )}
         </Link>
@@ -291,7 +291,7 @@ export function Sidebar() {
                   {profile?.clinicName || "Clinic"}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  {profile?.email || "pettraq@example.com"}
+                  {profile?.email || "petark@example.com"}
                 </p>
               </div>
             </div>

@@ -45,12 +45,12 @@ export default function LoginComp() {
         try {
             // 1. Login to get token
             const loginResponse = await loginClinic({ email, password });
-            console.log("Login response:", loginResponse);
+            // console.log("Login response:", loginResponse);
             
             // 2. Store the clinic_token
             if (loginResponse.token) {
                 setClinicToken(loginResponse.token); // Updated to setClinicToken
-                console.log("Clinic token stored:", loginResponse.token);
+                // console.log("Clinic token stored:", loginResponse.token);
             }
             
             // 3. Fetch clinic profile using the token
@@ -91,7 +91,7 @@ export default function LoginComp() {
         <main className="min-h-screen flex items-center justify-center bg-bg-clr">
             <div className="w-full max-w-md p-8 space-y-6 bg-pry-clr rounded-lg shadow-md">
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold text-sec-clr pry-ff">Pettraq Login</h1>
+                    <h1 className="text-2xl font-bold text-sec-clr pry-ff">PetArk Login</h1>
                     <p className="mt-2 text-sec-clr pry-ff">Sign in to your account</p>
                 </div>
 

@@ -3,8 +3,8 @@ import { Toaster } from "sonner"; // import Toaster
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pettraq",
-  description: "Pettraq",
+  title: "PetArk",
+  description: "PetArk",
 }
 
 export default function RootLayout({

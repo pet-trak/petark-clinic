@@ -9,7 +9,7 @@ export default function Home() {
           <div className="rounded-full overflow-hidden bg-white w-20 h-20 flex items-center justify-center shadow-md">
             <Image
               src="/pettrak_logo.png"
-              alt="Pettraq logo"
+              alt="PetArk logo"
               width={80}
               height={80}
               priority
@@ -19,7 +19,7 @@ export default function Home() {
         </div>
         
         <h1 className="text-xl md:text-xl lg:text-3xl font-bold text-sec-clr mb-4 pry-ff">
-          Welcome to Pettraq for Veterinary Clinics
+          Welcome to PetArk for Veterinary Clinics
         </h1>
         <p className="text-md md:text-md lg:text-lg text-gray-500 pry-ff">
           Your pet health monitoring system for animals

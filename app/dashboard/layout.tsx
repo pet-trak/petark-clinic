@@ -4,7 +4,7 @@ import DashboardClientLayout from "./client-layout";
 
 export const metadata: Metadata = {
     title: "Dashboard",
-    description: "PetTraq Dashboard",
+    description: "PetArk Dashboard",
 };
 
 export default function DashboardLayout({

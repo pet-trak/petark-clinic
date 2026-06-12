@@ -294,7 +294,7 @@ export default function RegisterComp() {
                                     onChange={(e) => setClinicName(e.target.value)}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-acc-clr focus:border-transparent transition-all duration-200"
-                                    placeholder="Pettraq Veterinary Clinic"
+                                    placeholder="PetArk Veterinary Clinic"
                                 />
                             </div>
 
@@ -309,7 +309,7 @@ export default function RegisterComp() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-acc-clr focus:border-transparent transition-all duration-200"
-                                    placeholder="clinic@pettraq.com"
+                                    placeholder="clinic@petark.com"
                                 />
                             </div>
 
