@@ -107,13 +107,20 @@ export default function GetAppointments() {
                     <select
                         value={range}
                         onChange={(e) => handleRangeChange(e.target.value as DateRange)}
-                        className="appearance-none pl-3 pr-8 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors cursor-pointer"
+                        className="appearance-none pl-3 pr-8 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:border-acc-clr focus:outline-none focus:ring-2 focus:ring-acc-clr focus:border-acc-clr transition-all cursor-pointer"
                     >
                         {DATE_RANGES.map(({ label, value }) => (
-                            <option key={value} value={value}>{label}</option>
+                            <option 
+                                key={value} 
+                                value={value}
+                                className="text-gray-700"
+                                style={value === range ? { color: 'var(--acc-clr, #2563eb)', fontWeight: '500' } : {}}
+                            >
+                                {label}
+                            </option>
                         ))}
                     </select>
-                    <ChevronDown size={12} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <ChevronDown size={12} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-acc-clr" />
                 </div>
             </div>
 

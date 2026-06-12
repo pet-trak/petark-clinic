@@ -25,10 +25,10 @@ function SkeletonCard() {
     );
 }
 
-function StatusBadge({ status }: { status: Visit["status"] }) {
+function StatusBadge({ status }: Readonly<{ status: Visit["status"] }>) {
     const styles = {
-        "in-progress": "bg-blue-50 text-blue-700",
-        "completed": "bg-green-50 text-green-700",
+        "in-progress": "bg-blue-50 text-blue-700 p-1 rounded-md",
+        "completed": "bg-green-50 text-green-700 p-1 rounded-md",
     };
     
     return (
