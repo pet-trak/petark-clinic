@@ -10,7 +10,8 @@ export interface AppointmentPet {
     name: string;
     species: string;
     breed: string;
-    age: string;
+    age: number;
+    gender?: string;
     photo?: string;
 }
 
@@ -21,21 +22,30 @@ export interface AppointmentUser {
     phone?: string;
 }
 
+export interface AppointmentVet {
+    _id: string;
+    fullname: string;
+    email: string;
+}
+
 export interface Appointment {
     _id: string;
     userId: string;
     petId: string;
     clinicId: string;
     vetId: string | null;
-    date: string;
-    notes: string;
+    appointmentDate: string;
+    appointmentTime: string;
+    date?: string; // for backwards compatibility
+    notes?: string;
     status: "pending" | "confirmed" | "cancelled" | "completed";
     createdAt: string;
-    updatedAt: string;
+    updatedAt?: string;
     confirmedBy?: string;
     confirmedAt?: string;
     notificationsSent?: string[];
     user?: AppointmentUser;
+    vet?: AppointmentVet;
     pet?: AppointmentPet;
 }
 
@@ -65,9 +75,9 @@ export interface GetAppointmentsParams {
 export interface AppointmentStats {
     today: number;
     thisWeek: number;
-    weekChange: number;   // % change vs last week, can be negative
+    weekChange: number;
     pending: number;
-    pendingPct: number;   // pending as % of total
+    pendingPct: number;
     total: number;
 }
 
@@ -101,6 +111,28 @@ export async function getAppointments(params: GetAppointmentsParams): Promise<Ap
         } else {
             console.error("Error fetching appointments:", error);
         }
+        throw error;
+    }
+}
+
+export async function getAppointmentById(appointmentId: string): Promise<Appointment> {
+    try {
+        const response = await api.get<{ status: string; data: { appointment: Appointment } }>(
+            `/appointment/clinics/${appointmentId}`,
+            {
+                headers: {
+                    'Cache-Control': 'no-cache',
+                },
+                // Add this to see raw response time
+                transformResponse: [(data) => {
+                    console.log('Response received at:', new Date().toISOString());
+                    return JSON.parse(data);
+                }],
+            }
+        );
+        return response.data.data.appointment;
+    } catch (error) {
+        console.error("Error fetching appointment:", error);
         throw error;
     }
 }

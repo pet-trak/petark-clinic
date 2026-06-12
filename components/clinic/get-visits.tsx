@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { getVisit, type Visit, getAdministeredByDisplay } from "@/lib/visit";
+import Link from "next/link";
 import { CalendarDays, Activity, RefreshCw, PawPrint, User, Clock } from "lucide-react";
 
 function SkeletonCard() {
@@ -86,7 +87,10 @@ export default function GetVisits() {
             <section className="space-y-4 w-full max-w-md">
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-sec-clr pry-ff">Recent Visits</h2>
-                    <button className="text-sm text-sec-clr pry-ff">View All</button>
+                    <Link href="/dashboard/records"
+                        className="text-sm text-sec-clr pry-ff cursor-pointer">
+                        View All
+                    </Link>
                 </div>
                 <div className="space-y-3">
                     {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
@@ -134,9 +138,9 @@ export default function GetVisits() {
         <section className="space-y-4 w-full max-w-md">
             <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-sec-clr">Recent Visits</h2>
-                <button className="text-sm text-sec-clr hover:text-sec-hover transition-colors">
+                <Link href="/dashboard/records" className="text-sm text-sec-clr hover:text-sec-hover transition-colors">
                     View All
-                </button>
+                </Link>
             </div>
 
             <div className="space-y-3">

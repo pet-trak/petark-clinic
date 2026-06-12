@@ -3,6 +3,7 @@ import axios from "axios";
 
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
+    timeout: 30000,
 });
 
 // Add a request interceptor to add the clinic_token to every request

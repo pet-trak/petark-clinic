@@ -3,6 +3,7 @@
 // components/clinic/get-appointments.tsx
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getAppointments, type Appointment, type DateRange, type AppointmentsPage } from "@/lib/appointment";
 import { useAppointmentsContext } from "@/context/appointments-context";
 import VisitBtn from "@/components/clinic/visit-btn";
@@ -50,6 +51,7 @@ function SkeletonRow() {
 const EMPTY_PAGE: AppointmentsPage = { appointments: [], total: 0, page: 1, totalPages: 1, count: 0 };
 
 export default function GetAppointments() {
+    const router = useRouter();
     const [data, setData] = useState<AppointmentsPage>(EMPTY_PAGE);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -79,11 +81,15 @@ export default function GetAppointments() {
 
         fetch();
         return () => { cancelled = true; };
-    }, [page, range]);
+    }, [page, range, setCtxAppointments]);
 
     function handleRangeChange(next: DateRange) {
         setPage(1);
         setRange(next);
+    }
+
+    function handleRowClick(appointmentId: string) {
+        router.push(`/dashboard/appointments/${appointmentId}`);
     }
 
     const { appointments, total, totalPages } = data;
@@ -160,18 +166,19 @@ export default function GetAppointments() {
                             appointments.map((appt) => (
                                 <tr
                                     key={appt._id}
-                                    className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
+                                    onClick={() => handleRowClick(appt._id)}
+                                    className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer"
                                 >
                                     <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
                                         <span className="flex items-center gap-1.5">
                                             <CalendarDays size={13} className="text-gray-400 shrink-0" />
-                                            {formatDate(appt.date)}
+                                            {formatDate(appt.date || appt.appointmentDate || appt.createdAt)}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
                                         <span className="flex items-center gap-1.5">
                                             <Clock size={13} className="text-gray-400 shrink-0" />
-                                            {formatTime(appt.date)}
+                                            {formatTime(appt.date || appt.appointmentTime || appt.createdAt)}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3">
@@ -216,7 +223,9 @@ export default function GetAppointments() {
                                         </span>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <VisitBtn appointmentId={appt._id} status={appt.status} />
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            <VisitBtn appointmentId={appt._id} status={appt.status} />
+                                        </div>
                                     </td>
                                 </tr>
                             ))
