@@ -38,21 +38,21 @@ export default function AppointmentHeader() {
         ];
 
         // --- Appointments rows ---
-        const apptRows = appointments.map((a) => {
-            const date  = new Date(a.date).toLocaleDateString("en-GB");
-            const time  = new Date(a.date).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-            return [
-                date,
-                time,
-                a.user?.fullname  ?? "—",
-                a.user?.email     ?? "—",
-                a.pet?.name       ?? "—",
-                a.pet?.breed      ?? "—",
-                a.pet?.species    ?? "—",
-                `"${(a.notes ?? "").replace(/"/g, '""')}"`,  // escape quotes in notes
-                a.status,
-            ];
-        });
+const apptRows = appointments.map((a) => {
+    const date = a.date ? new Date(a.date).toLocaleDateString("en-GB") : "—";
+    const time = a.date ? new Date(a.date).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "—";
+    return [
+        date,
+        time,
+        a.user?.fullname  ?? "—",
+        a.user?.email     ?? "—",
+        a.pet?.name       ?? "—",
+        a.pet?.breed      ?? "—",
+        a.pet?.species    ?? "—",
+        `"${(a.notes ?? "").replace(/"/g, '""')}"`,
+        a.status,
+    ];
+});;
 
         const allRows = [...summaryRows, ...apptRows];
         const csv     = allRows.map((r) => r.join(",")).join("\n");
