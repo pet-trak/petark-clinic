@@ -11,17 +11,19 @@ import { type Appointment, updateAppointmentStatus } from "@/lib/appointment";
 interface VisitBtnProps {
     appointmentId: string;
     status: Appointment["status"];
+    hasActiveVisit?: boolean;
     onConfirmed?: () => void;
 }
 
 const VISIT_ACTION_LABELS: Partial<Record<Appointment["status"], { label: string; className: string }>> = {
-    completed: { label: "Visit closed", className: "text-blue-500" },
-    cancelled: { label: "Cancelled",    className: "text-red-400"  },
+    completed: { label: "Visit closed",   className: "text-blue-500"  },
+    cancelled: { label: "Cancelled",      className: "text-red-400"   },
 };
 
 export default function VisitBtn({
     appointmentId,
     status,
+    hasActiveVisit = false,
     onConfirmed,
 }: Readonly<VisitBtnProps>) {
     const [loading, setLoading] = useState(false);
@@ -62,7 +64,12 @@ export default function VisitBtn({
             : null;
     }
 
-    // confirmed → navigate to create visit page
+    // confirmed but visit already exists → show in-progress label
+    if (hasActiveVisit) {
+        return <span className="text-xs italic text-orange-500">Visit in progress</span>;
+    }
+
+    // confirmed + no active visit → "Create Visit"
     return (
         <button
             onClick={handleCreateVisit}

@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAppointments, type Appointment, type DateRange, type AppointmentsPage } from "@/lib/appointment";
+import { getVisit } from "@/lib/visit";
 import { useAppointmentsContext } from "@/context/appointments-context";
 import VisitBtn from "@/components/clinic/visit-btn";
 import { CalendarDays, Clock, AlertCircle, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
@@ -58,19 +59,34 @@ export default function GetAppointments() {
     const [page, setPage] = useState(1);
     const [range, setRange] = useState<DateRange>("all");
 
+    // set of appointmentIds that already have an in-progress visit
+    const [activeVisitIds, setActiveVisitIds] = useState<Set<string>>(new Set());
+
     const { setAppointments: setCtxAppointments } = useAppointmentsContext();
 
     useEffect(() => {
         let cancelled = false;
 
-        async function fetch() {
+        async function load() {
             setLoading(true);
             setError(null);
             try {
-                const result = await getAppointments({ page, range });
+                const [result, visits] = await Promise.all([
+                    getAppointments({ page, range }),
+                    getVisit(),
+                ]);
+
                 if (!cancelled) {
                     setData(result);
                     setCtxAppointments(result.appointments);
+
+                    // build a set of appointmentIds with an active (in-progress) visit
+                    const ids = new Set(
+                        visits
+                            .filter((v) => v.status === "in-progress")
+                            .map((v) => v.appointmentId)
+                    );
+                    setActiveVisitIds(ids);
                 }
             } catch {
                 if (!cancelled) setError("Failed to load appointments. Please try again.");
@@ -79,7 +95,7 @@ export default function GetAppointments() {
             }
         }
 
-        fetch();
+        load();
         return () => { cancelled = true; };
     }, [page, range, setCtxAppointments]);
 
@@ -227,6 +243,7 @@ export default function GetAppointments() {
                                             <VisitBtn
                                                 appointmentId={appt._id}
                                                 status={appt.status}
+                                                hasActiveVisit={activeVisitIds.has(appt._id)}
                                                 onConfirmed={() => setData((prev) => ({
                                                     ...prev,
                                                     appointments: prev.appointments.map((a) =>

@@ -3,9 +3,9 @@
 // components/clinic/get-visit-records.tsx
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import {
     getVisitRecords,
-    getAdministeredBy,
     type VisitRecord,
     type VisitRecordsPage,
 } from "@/lib/visit-records";
@@ -19,6 +19,8 @@ import {
     ExternalLink,
     SlidersHorizontal,
 } from "lucide-react";
+
+import Link from "next/link";
 
 const STATUS_STYLES: Record<VisitRecord["status"], string> = {
     "in-progress": "bg-yellow-100 text-yellow-700",
@@ -50,18 +52,6 @@ function formatCurrency(amount: number) {
     }).format(amount);
 }
 
-function SkeletonRow() {
-    return (
-        <tr className="border-b border-gray-100">
-            {Array.from({ length: 9 }).map((_, i) => (
-                <td key={i} className="px-4 py-3">
-                    <div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" />
-                </td>
-            ))}
-        </tr>
-    );
-}
-
 const EMPTY_PAGE: VisitRecordsPage = {
     data: [], page: 1, limit: 8, total: 0, totalPages: 1, results: 0,
 };
@@ -86,7 +76,8 @@ export default function GetVisitRecords() {
                     ...(statusFilter !== "all" && { status: statusFilter }),
                 });
                 if (!cancelled) setData(result);
-            } catch {
+            } catch (err) {
+                console.error("Failed to fetch visit records:", err);
                 if (!cancelled) setError("Failed to load visit records. Please try again.");
             } finally {
                 if (!cancelled) setLoading(false);
@@ -102,9 +93,10 @@ export default function GetVisitRecords() {
         setStatusFilter(next);
     }
 
-    const { data: visits, total, totalPages } = data;
+    const { data: visits, total, totalPages, limit } = data;
     const hasPrev = page > 1;
     const hasNext = page < totalPages;
+    const showEmptyState = !loading && visits.length === 0;
 
     // page window: show up to 5 page buttons
     const pageWindow = () => {
@@ -121,7 +113,7 @@ export default function GetVisitRecords() {
     return (
         <section className="space-y-4">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
                     <h2 className="text-lg font-semibold text-gray-900">Visit Records</h2>
                     <p className="text-sm text-gray-400 mt-0.5">
@@ -164,107 +156,132 @@ export default function GetVisitRecords() {
                 </div>
             )}
 
-{/* Table with horizontal scroll */}
-<div className="rounded-xl border border-gray-200 overflow-x-auto shadow-sm">
-    <div className="min-w-200">
-        <table className="w-full text-sm">
-            <thead>
-                <tr className="border-b border-gray-200 text-left bg-bg-clr text-xs font-semibold text-sec-clr uppercase tracking-wide">
-                    <th className="px-4 py-3">Pet Name</th>
-                    <th className="px-4 py-3">Breed / Species</th>
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {loading ? (
-                    Array.from({ length: 8 }).map((_, i) => (
-                        <tr key={i} className="border-b border-gray-100">
-                            <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" /></td>
-                            <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" /></td>
-                            <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" /></td>
-                            <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" /></td>
-                            <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" /></td>
-                        </tr>
-                    ))
-                ) : visits.length === 0 ? (
-                    <tr>
-                        <td colSpan={5} className="px-4 py-14 text-center text-gray-400">
-                            <Stethoscope size={32} className="mx-auto mb-2 opacity-30" />
-                            <p className="text-sm">No visit records found</p>
-                        </td>
-                    </tr>
-                ) : (
-                    visits.map((visit) => (
-                        <tr
-                            key={visit._id}
-                            className="border-b border-gray-100 last:border-0 hover:bg-gray-50/60 transition-colors"
-                        >
-                            {/* Pet Name */}
-                            <td className="px-4 py-3">
-                                {visit.pet ? (
-                                    <div className="flex items-center gap-2">
-                                        {visit.pet.photo ? (
-                                            <img
-                                                src={visit.pet.photo}
-                                                alt={visit.pet.name}
-                                                className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-100"
-                                            />
-                                        ) : (
-                                            <div className="w-8 h-8 rounded-full bg-green-50 shrink-0 flex items-center justify-center text-green-600 text-xs font-semibold border border-green-100">
-                                                {visit.pet.name.charAt(0).toUpperCase()}
-                                            </div>
-                                        )}
-                                        <div>
-                                            <p className="text-gray-800 font-medium capitalize leading-tight">{visit.pet.name}</p>
-                                            <p className="text-gray-400 text-xs">Age {visit.pet.age} · {visit.pet.gender}</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <span className="text-gray-300 italic text-xs">Unknown</span>
-                                )}
-                            </td>
+            {/* Table with horizontal scroll */}
+            <div className="rounded-xl border border-gray-200 overflow-x-auto shadow-sm">
+                <div className="min-w-[800px]">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b border-gray-200 text-left bg-gray-50 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                <th className="px-4 py-3">Pet Name</th>
+                                <th className="px-4 py-3">Breed / Species</th>
+                                <th className="px-4 py-3">Date</th>
+                                <th className="px-4 py-3">Status</th>
+                                <th className="px-4 py-3">Payment</th>
+                                <th className="px-4 py-3">Amount</th>
+                                <th className="px-4 py-3 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <tr key={i} className="border-b border-gray-100">
+                                        <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" /></td>
+                                        <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" /></td>
+                                        <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" /></td>
+                                        <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" /></td>
+                                        <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" /></td>
+                                        <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" /></td>
+                                        <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" /></td>
+                                    </tr>
+                                ))
+                            ) : showEmptyState ? (
+                                <tr>
+                                    <td colSpan={7} className="px-4 py-14 text-center text-gray-400">
+                                        <Stethoscope size={32} className="mx-auto mb-2 opacity-30" />
+                                        <p className="text-sm">No visit records found</p>
+                                    </td>
+                                </tr>
+                            ) : (
+                                visits.map((visit) => (
+                                    <tr
+                                        key={visit._id}
+                                        className="border-b border-gray-100 last:border-0 hover:bg-gray-50/60 transition-colors"
+                                    >
+                                        {/* Pet Name */}
+                                        <td className="px-4 py-3">
+                                            {visit.pet ? (
+                                                <div className="flex items-center gap-2">
+                                                    {visit.pet.photo ? (
+                                                        <Image
+                                                            src={visit.pet.photo}
+                                                            alt={visit.pet.name}
+                                                            className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-100"
+                                                            width={32}
+                                                            height={32}
+                                                        />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-green-50 shrink-0 flex items-center justify-center text-green-600 text-xs font-semibold border border-green-100">
+                                                            {visit.pet.name.charAt(0).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <p className="text-gray-800 font-medium capitalize leading-tight">{visit.pet.name}</p>
+                                                        <p className="text-gray-400 text-xs">Age {visit.pet.age} · {visit.pet.gender}</p>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-300 italic text-xs">Unknown Pet</span>
+                                            )}
+                                        </td>
 
-                            {/* Breed / Species */}
-                            <td className="px-4 py-3 text-gray-600 text-xs capitalize">
-                                {visit.pet ? (
-                                    <span>{visit.pet.breed} / {visit.pet.species}</span>
-                                ) : "—"}
-                            </td>
+                                        {/* Breed / Species */}
+                                        <td className="px-4 py-3 text-gray-600 text-xs capitalize">
+                                            {visit.pet ? (
+                                                <span>{visit.pet.breed || "Unknown"} / {visit.pet.species || "Unknown"}</span>
+                                            ) : "—"}
+                                        </td>
 
-                            {/* Date */}
-                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap text-xs">
-                                {formatDate(visit.createdAt)}
-                            </td>
+                                        {/* Date */}
+                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap text-xs">
+                                            {formatDate(visit.createdAt)}
+                                        </td>
 
-                            {/* Status */}
-                            <td className="px-4 py-3">
-                                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_STYLES[visit.status]}`}>
-                                    {visit.status}
-                                </span>
-                            </td>
+                                        {/* Status */}
+                                        <td className="px-4 py-3">
+                                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_STYLES[visit.status]}`}>
+                                                {visit.status}
+                                            </span>
+                                        </td>
 
-                            {/* Actions */}
-                            <td className="px-4 py-3">
-                                <button className="flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-800 transition-colors whitespace-nowrap">
-                                    View Full Record
-                                    <ExternalLink size={11} />
-                                </button>
-                            </td>
-                        </tr>
-                    ))
-                )}
-            </tbody>
-        </table>
-    </div>
-</div>
+                                        {/* Payment Status */}
+                                        <td className="px-4 py-3">
+                                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${PAYMENT_STYLES[visit.paymentStatus]}`}>
+                                                {visit.paymentStatus}
+                                            </span>
+                                        </td>
+
+                                        {/* Amount */}
+                                        <td className="px-4 py-3 text-gray-700 text-xs font-medium">
+                                            {typeof (visit as VisitRecord & { totalAmount?: number; amount?: number }).totalAmount === "number"
+                                                ? formatCurrency((visit as VisitRecord & { totalAmount?: number; amount?: number }).totalAmount as number)
+                                                : typeof (visit as VisitRecord & { totalAmount?: number; amount?: number }).amount === "number"
+                                                    ? formatCurrency((visit as VisitRecord & { totalAmount?: number; amount?: number }).amount as number)
+                                                    : "—"}
+                                        </td>
+
+                                        {/* Actions */}
+                                        <td className="px-4 py-3 text-center">
+                                            <Link 
+                                                href={`/dashboard/records/${visit._id}`} 
+                                                className="inline-flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-800 transition-colors whitespace-nowrap"
+                                            >
+                                                View Details
+                                                <ExternalLink size={11} />
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
             {/* Footer: count + pagination */}
-            {!loading && (
-                <div className="flex items-center justify-between text-xs text-gray-400">
+            {!loading && total > 0 && (
+                <div className="flex items-center justify-between text-xs text-gray-400 flex-wrap gap-2">
                     <span>
-                        Showing {visits.length === 0 ? 0 : (page - 1) * data.limit + 1} to {Math.min(page * data.limit, total)} of {total} entries
+                        Showing {visits.length === 0 ? 0 : (page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} entries
                     </span>
 
                     {totalPages > 1 && (
@@ -273,6 +290,7 @@ export default function GetVisitRecords() {
                                 onClick={() => setPage((p) => p - 1)}
                                 disabled={!hasPrev}
                                 className="p-1.5 rounded-lg border border-gray-200 hover:border-gray-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                aria-label="Previous page"
                             >
                                 <ChevronLeft size={13} />
                             </button>
@@ -286,33 +304,43 @@ export default function GetVisitRecords() {
                                             ? "bg-gray-900 text-white border-gray-900"
                                             : "border-gray-200 text-gray-600 hover:border-gray-400"
                                     }`}
+                                    aria-label={`Go to page ${p}`}
+                                    aria-current={p === page ? "page" : undefined}
                                 >
                                     {p}
                                 </button>
                             ))}
 
                             {page + 2 < totalPages && (
-                                <span className="px-1 text-gray-300">...</span>
-                            )}
-
-                            {page + 2 < totalPages && (
-                                <button
-                                    onClick={() => setPage(totalPages)}
-                                    className="w-7 h-7 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:border-gray-400 transition-colors"
-                                >
-                                    {totalPages}
-                                </button>
+                                <>
+                                    <span className="px-1 text-gray-300">...</span>
+                                    <button
+                                        onClick={() => setPage(totalPages)}
+                                        className="w-7 h-7 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:border-gray-400 transition-colors"
+                                        aria-label={`Go to last page ${totalPages}`}
+                                    >
+                                        {totalPages}
+                                    </button>
+                                </>
                             )}
 
                             <button
                                 onClick={() => setPage((p) => p + 1)}
                                 disabled={!hasNext}
                                 className="p-1.5 rounded-lg border border-gray-200 hover:border-gray-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                aria-label="Next page"
                             >
                                 <ChevronRight size={13} />
                             </button>
                         </div>
                     )}
+                </div>
+            )}
+            
+            {/* Show total count even when no results */}
+            {!loading && total === 0 && (
+                <div className="text-center text-xs text-gray-400">
+                    Total: 0 entries
                 </div>
             )}
         </section>
