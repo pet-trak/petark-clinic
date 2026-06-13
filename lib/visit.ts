@@ -4,9 +4,9 @@ import api from "./api";
 import axiosError from "axios";
 
 interface Vitals {
-    weight: number; // in kg
-    temp: number; // in °C
-    pulse: number; // in bpm
+    weight: number;      // in kg
+    temp: number;        // in °C
+    pulse: number;       // in bpm
     respiration: number; // in breaths per minute
     appetite: string;
     activity: string;
@@ -25,7 +25,7 @@ interface Pet {
     breed: string;
     age: string;
     weight: string; // in kg
-    gender: 'male' | 'female';
+    gender: "male" | "female";
     photo?: string;
 }
 
@@ -45,10 +45,10 @@ interface ApiVisitResponse {
     vitals: Vitals;
     notes?: string;
     billing: Billing;
-    paymentStatus: 'unpaid' | 'paid' | 'failed' | 'refunded';
+    paymentStatus: "unpaid" | "paid" | "failed" | "refunded";
     createdAt: string;
     completedAt: string | null;
-    pet: Pet;  // Changed from Pet[] to Pet (object, not array)
+    pet: Pet;
     vet?: Vet;
 }
 
@@ -66,15 +66,42 @@ interface GetVisitResponse {
     data: ApiVisitResponse[];
 }
 
+export interface CreateVisitPayload {
+    appointmentId: string;
+    petId: string;
+    vetId?: string;
+    vitals: Vitals;
+    notes?: string;
+}
+
+interface CreateVisitResponse {
+    status: string;
+    data: {
+        visit: ApiVisitResponse;
+    };
+}
+
+export async function createVisit(payload: CreateVisitPayload): Promise<ApiVisitResponse> {
+    try {
+        const response = await api.post<CreateVisitResponse>("/visit", payload);
+        return response.data.data.visit;
+    } catch (error) {
+        if (axiosError.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || "Failed to create visit");
+        }
+        throw new Error("An unexpected error occurred while creating visit");
+    }
+}
+
 export async function getVisit(): Promise<Visit[]> {
     try {
         const response = await api.get<GetVisitResponse>("/visit/clinic");
-        
+
         const visits: Visit[] = response.data.data.map((visit: ApiVisitResponse) => ({
             ...visit,
-            administeredBy: visit.vetId ? "Vet" : "Clinic"
+            administeredBy: visit.vetId ? "Vet" : "Clinic",
         }));
-        
+
         return visits;
     } catch (error) {
         if (axiosError.isAxiosError(error)) {
@@ -87,12 +114,12 @@ export async function getVisit(): Promise<Visit[]> {
 export async function getSingleVisit(visitId: string): Promise<Visit> {
     try {
         const response = await api.get<{ data: ApiVisitResponse }>(`/visit/clinic/${visitId}`);
-        
+
         const visit: Visit = {
             ...response.data.data,
-            administeredBy: response.data.data.vetId ? "Vet" : "Clinic"
+            administeredBy: response.data.data.vetId ? "Vet" : "Clinic",
         };
-        
+
         return visit;
     } catch (error) {
         if (axiosError.isAxiosError(error)) {

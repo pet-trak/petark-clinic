@@ -136,3 +136,24 @@ export async function getAppointmentById(appointmentId: string): Promise<Appoint
         throw error;
     }
 }
+
+// update appointment status
+export async function updateAppointmentStatus(
+    appointmentId: string,
+    status: Appointment["status"]
+): Promise<Appointment> {
+    try {
+        const response = await api.patch<{ status: string; data: { appointment: Appointment } }>(
+            `/appointment/${appointmentId}/status`,
+            { status }
+        );
+        return response.data.data.appointment;
+    } catch (error) {
+        if (axiosError.isAxiosError(error)) {
+            console.error("Error updating appointment status:", error.response?.data || error.message);
+        } else {
+            console.error("Error updating appointment status:", error);
+        }
+        throw error;
+    }
+}

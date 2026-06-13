@@ -55,8 +55,8 @@ export default function LoginComp() {
             
             // 3. Fetch clinic profile using the token
             const profile = await getUser();
-            console.log("Fetched profile:", profile);
-            console.log("Profile clinicName:", profile?.clinicName);
+            // console.log("Fetched profile:", profile);
+            // console.log("Profile clinicName:", profile?.clinicName);
             
             // 4. Store the profile in Zustand
             setProfile(profile);

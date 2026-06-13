@@ -17,10 +17,10 @@ const STATUS_STYLES: Record<Appointment["status"], string> = {
 };
 
 const DATE_RANGES: { label: string; value: DateRange }[] = [
-    { label: "All",        value: "all"        },
-    { label: "Today",      value: "today"      },
-    { label: "Last 7 days",value: "7days"      },
-    { label: "Last month", value: "1month"     },
+    { label: "All",          value: "all"        },
+    { label: "Today",        value: "today"      },
+    { label: "Last 7 days",  value: "7days"      },
+    { label: "Last month",   value: "1month"     },
     { label: "Month before", value: "last_month" },
 ];
 
@@ -108,7 +108,7 @@ export default function GetAppointments() {
                         </p>
                     )}
                 </div>
-                
+
                 <div className="relative w-fit">
                     <select
                         value={range}
@@ -116,11 +116,11 @@ export default function GetAppointments() {
                         className="appearance-none pl-3 pr-8 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:border-acc-clr focus:outline-none focus:ring-2 focus:ring-acc-clr focus:border-acc-clr transition-all cursor-pointer"
                     >
                         {DATE_RANGES.map(({ label, value }) => (
-                            <option 
-                                key={value} 
+                            <option
+                                key={value}
                                 value={value}
                                 className="text-gray-700"
-                                style={value === range ? { color: 'var(--acc-clr, #2563eb)', fontWeight: '500' } : {}}
+                                style={value === range ? { color: "var(--acc-clr, #2563eb)", fontWeight: "500" } : {}}
                             >
                                 {label}
                             </option>
@@ -138,7 +138,7 @@ export default function GetAppointments() {
                 </div>
             )}
 
-            {/* Table with horizontal scroll */}
+            {/* Table */}
             <div className="rounded-xl border border-gray-200 overflow-x-auto">
                 <table className="min-w-[800px] w-full text-sm">
                     <thead>
@@ -224,7 +224,16 @@ export default function GetAppointments() {
                                     </td>
                                     <td className="px-4 py-3">
                                         <div onClick={(e) => e.stopPropagation()}>
-                                            <VisitBtn appointmentId={appt._id} status={appt.status} />
+                                            <VisitBtn
+                                                appointmentId={appt._id}
+                                                status={appt.status}
+                                                onConfirmed={() => setData((prev) => ({
+                                                    ...prev,
+                                                    appointments: prev.appointments.map((a) =>
+                                                        a._id === appt._id ? { ...a, status: "confirmed" } : a
+                                                    ),
+                                                }))}
+                                            />
                                         </div>
                                     </td>
                                 </tr>
@@ -237,9 +246,7 @@ export default function GetAppointments() {
             {/* Pagination */}
             {!loading && totalPages > 1 && (
                 <div className="flex items-center justify-between text-sm text-gray-500">
-                    <span>
-                        Page {page} of {totalPages}
-                    </span>
+                    <span>Page {page} of {totalPages}</span>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setPage((p) => p - 1)}
