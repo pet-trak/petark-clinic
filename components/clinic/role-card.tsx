@@ -78,7 +78,7 @@ export default function RoleCard({ roleKey, label, permissions }: Readonly<RoleC
   const permSet = new Set(permissions);
 
   return (
-    <div className="border border-gray-100 rounded-xl overflow-hidden">
+    <div className="border border-gray-100 rounded-xl overflow-hidden pry-ff">
       {/* Role header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-gray-50">
         <div
