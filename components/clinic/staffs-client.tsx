@@ -73,7 +73,7 @@ export default function StaffsClient() {
               <div>
                 <h1 className="text-lg font-semibold text-gray-900 pry-ff">Staff</h1>
                 <p className="text-sm text-gray-500 sec-ff">
-                  Manage team members for this store
+                  Manage the staffs for this clinic
                 </p>
               </div>
             </div>

@@ -3,7 +3,7 @@ import StaffsClient from "@/components/clinic/staffs-client";
 
 export const metadata: Metadata = {
   title: "Staff | PetArk",
-  description: "Manage team members for this store",
+  description: "Manage the staffs for this clinic",
 };
 
 export default function StaffsPage() {
