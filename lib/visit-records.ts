@@ -98,6 +98,6 @@ export async function getVisitRecords(params: GetVisitRecordsParams = {}): Promi
 export function getAdministeredBy(visit: VisitRecord): string {
     if (visit.vet?.fullname) return visit.vet.fullname;
     if (visit.vet?.name)     return `Dr. ${visit.vet.name}`;
-    if (visit.vetId)         return "Veterinarian";
+    if (visit.vetId)         return "vet";
     return "Clinic Staff";
 }

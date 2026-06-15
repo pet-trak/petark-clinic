@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function AccountPage() {
     return (
-        <main className="max-w-5xl mx-auto py-8 px-4 space-y-6 pry-ff">
+        <main className="px-8 py-8 space-y-10 pry-ff">
             <div>
                 <h1 className="text-2xl font-bold text-sec-clr">Account Settings</h1>
                 <p className="text-sm text-gray-400 mt-1">

@@ -150,7 +150,7 @@ export function getAdministeredByDisplay(visit: Visit): string {
         return `Dr. ${visit.vet.name}`;
     }
     if (visit.vetId) {
-        return "Veterinarian";
+        return "Vet";
     }
     return "Clinic Staff";
 }
