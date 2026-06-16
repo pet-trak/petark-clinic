@@ -1,15 +1,10 @@
-// src/components/login-comp.tsx
 "use client";
 
 import { loginClinic } from "@/lib/auth";
 import { getUser } from "@/lib/user";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-    Loader2,
-    Eye,
-    EyeOff,
-} from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/useStore";
 
@@ -21,10 +16,10 @@ interface LoginError {
 
 function isLoginError(error: unknown): error is LoginError {
     return (
-        typeof error === 'object' &&
+        typeof error === "object" &&
         error !== null &&
-        'status' in error &&
-        'message' in error
+        "status" in error &&
+        "message" in error
     );
 }
 
@@ -35,7 +30,7 @@ export default function LoginComp() {
     const [error, setError] = useState<string>("");
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const { setClinicToken, setProfile } = useAuthStore(); // Updated to setClinicToken
+    const { setClinicToken, setProfile } = useAuthStore();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -43,29 +38,20 @@ export default function LoginComp() {
         setLoading(true);
 
         try {
-            // 1. Login to get token
             const loginResponse = await loginClinic({ email, password });
-            // console.log("Login response:", loginResponse);
-            
-            // 2. Store the clinic_token
+
             if (loginResponse.token) {
-                setClinicToken(loginResponse.token); // Updated to setClinicToken
-                // console.log("Clinic token stored:", loginResponse.token);
+                setClinicToken(loginResponse.token);
             }
-            
-            // 3. Fetch clinic profile using the token
+
             const profile = await getUser();
-            // console.log("Fetched profile:", profile);
-            // console.log("Profile clinicName:", profile?.clinicName);
-            
-            // 4. Store the profile in Zustand
             setProfile(profile);
-            
+
             toast.success("Login successful!");
             router.push("/dashboard");
         } catch (error) {
             console.error("Login error:", error);
-            
+
             if (isLoginError(error)) {
                 if (error.status === 401) {
                     setError("Invalid email or password");
@@ -87,79 +73,76 @@ export default function LoginComp() {
     };
 
     return (
-        // ... rest of your JSX remains the same
-        <main className="min-h-screen flex items-center justify-center bg-bg-clr">
-            <div className="w-full max-w-md p-8 space-y-6 bg-pry-clr rounded-lg shadow-md">
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold text-sec-clr pry-ff">PetArk Login</h1>
-                    <p className="mt-2 text-sec-clr pry-ff">Sign in to your account</p>
-                </div>
-
-                <form onSubmit={handleLogin} className="space-y-4 sec-ff">
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-sec-ff">
-                            Email Address
-                        </label>
-                        <input
-                            id="email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-acc-clr focus:border-acc-clr"
-                            placeholder="clinic@example.com"
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-sec-ff">
-                            Password
-                        </label>
-                        <div className="relative">
-                            <input
-                                id="password"
-                                type={showPassword ? "text" : "password"}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                className="mt-1 block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-acc-clr focus:border-acc-clr"
-                                placeholder="••••••••"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                            >
-                                {showPassword ? (
-                                    <EyeOff className="h-5 w-5" />
-                                ) : (
-                                    <Eye className="h-5 w-5" />
-                                )}
-                            </button>
-                        </div>
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-pry-clr bg-acc-clr hover:bg-acc-clr/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-acc-clr disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                    >
-                        {loading ? <Loader2 className="animate-spin text-pry-clr" /> : "Sign In"}
-                    </button>
-                </form>
-
-                {error && (
-                    <div className="p-3 text-sm text-red-600 bg-red-100 rounded-md sec-ff">
-                        {error}
-                    </div>
-                )}
-
-                <div className="text-center text-sm cursor-pointer sec-ff">
-                    <a href="/signup" className="text-sec-clr">
-                        Don&apos;t have an account? Sign up here
-                    </a>
-                </div>
+        <div className="w-full max-w-sm md:max-w-md p-8 space-y-6 bg-pry-clr rounded-lg shadow-md">
+            <div className="text-center">
+                <h1 className="text-2xl font-bold text-sec-clr pry-ff">PetArk Login</h1>
+                <p className="mt-2 text-sec-clr pry-ff">Sign in to your account</p>
             </div>
-        </main>
+
+            <form onSubmit={handleLogin} className="space-y-4 sec-ff">
+                <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-sec-ff">
+                        Email Address
+                    </label>
+                    <input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-acc-clr focus:border-acc-clr"
+                        placeholder="clinic@example.com"
+                    />
+                </div>
+
+                <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-sec-ff">
+                        Password
+                    </label>
+                    <div className="relative">
+                        <input
+                            id="password"
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            className="mt-1 block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-acc-clr focus:border-acc-clr"
+                            placeholder="••••••••"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                        >
+                            {showPassword ? (
+                                <EyeOff className="h-5 w-5" />
+                            ) : (
+                                <Eye className="h-5 w-5" />
+                            )}
+                        </button>
+                    </div>
+                </div>
+
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-pry-clr bg-acc-clr hover:bg-acc-clr/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-acc-clr disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                    {loading ? <Loader2 className="animate-spin text-pry-clr" /> : "Sign In"}
+                </button>
+            </form>
+
+            {error && (
+                <div className="p-3 text-sm text-red-600 bg-red-100 rounded-md sec-ff">
+                    {error}
+                </div>
+            )}
+
+            <div className="text-center text-sm cursor-pointer sec-ff">
+                <a href="/signup" className="text-sec-clr hover:text-acc-clr transition-colors duration-200">
+                    Don&apos;t have an account? <b>Sign up here</b>
+                </a>
+            </div>
+        </div>
     );
 }

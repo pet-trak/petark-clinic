@@ -15,7 +15,7 @@ function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
       <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
         <MobileTopBar />
-        <main className="flex-1 min-w-0 overflow-y-auto">
+        <main className="flex-1 min-w-0 overflow-y-auto pb-16">
           {children}
         </main>
         <MobileBottomNav />
