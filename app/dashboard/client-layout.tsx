@@ -1,10 +1,11 @@
+// app/dashboard/client-layout.tsx
+
 "use client";
 
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/useStore";
 import { SidebarProvider, useSidebar } from "@/context/sidebar-context";
-import { Sidebar } from "@/components/clinic/sidebar";
-import { MobileTopBar, MobileBottomNav } from "@/components/clinic/sidebar";
+import { MobileTopBar, MobileBottomNav, Sidebar } from "@/components/clinic/sidebar";
 import { Loader2 } from "lucide-react";
 
 function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -12,7 +13,7 @@ function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
 
   if (isMobile) {
     return (
-      <div className="flex flex-col h-screen bg-gray-50">
+      <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
         <MobileTopBar />
         <main className="flex-1 min-w-0 overflow-y-auto">
           {children}
