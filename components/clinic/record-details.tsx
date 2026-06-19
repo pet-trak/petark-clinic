@@ -1,3 +1,5 @@
+// components/clinic/record-details.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -20,7 +22,9 @@ import {
     CheckCircle,
     XCircle,
     Pencil,
+    TrendingUp,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface RecordDetailsProps {
     visitId: string;
@@ -73,11 +77,12 @@ function RecordDetailsSkeleton() {
     );
 }
 
-export default function RecordDetails({ visitId }: RecordDetailsProps) {
+export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>) {
     const [visit, setVisit] = useState<Visit | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         async function fetchVisitRecord() {
@@ -106,6 +111,11 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
         setVisit(updated);
         setIsEditing(false);
     }
+
+    const handleTimeline = () => {
+        if (!visit) return;
+        router.push(`/dashboard/records/pet/${visit.petId}/timeline?userId=${visit.userId}`);
+    };
 
     if (loading) return <RecordDetailsSkeleton />;
 
@@ -145,7 +155,7 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
         <div className="space-y-6">
             {/* Pet Profile Header */}
             {visit.pet && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                <div className="bg-pry-clr rounded-2xl border border-gray-100 p-6 shadow-sm">
                     <div className="flex flex-col sm:flex-row sm:items-start gap-5">
                         {visit.pet.photo ? (
                             <img
@@ -205,7 +215,7 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
             {/* Vitals Cards */}
             {vitals && (
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="bg-pry-clr rounded-xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
                                 Weight
@@ -226,7 +236,7 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
                             </span>
                             <Heart className="w-4 h-4 text-red-400" />
                         </div>
-                        <p className="text-2xl font-bold text-gray-900">
+                        <p className="text-2xl font-bold text-sec-clr">
                             {vitals.pulse}{" "}
                             <span className="text-sm font-normal text-gray-400">bpm</span>
                         </p>
@@ -240,7 +250,7 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
                             </span>
                             <Thermometer className="w-4 h-4 text-orange-400" />
                         </div>
-                        <p className="text-2xl font-bold text-gray-900">
+                        <p className="text-2xl font-bold text-sec-clr">
                             {vitals.temp}{" "}
                             <span className="text-sm font-normal text-gray-400">°C</span>
                         </p>
@@ -254,7 +264,7 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
                             </span>
                             <Activity className="w-4 h-4 text-blue-400" />
                         </div>
-                        <p className="text-2xl font-bold text-gray-900">
+                        <p className="text-2xl font-bold text-sec-clr">
                             {vitals.respiration}{" "}
                             <span className="text-sm font-normal text-gray-400">/min</span>
                         </p>
@@ -269,7 +279,7 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
                 <div className="bg-pry-clr rounded-xl border border-gray-100 p-6 shadow-sm">
                     <div className="flex items-center gap-2 mb-4">
                         <FileText className="w-5 h-5 text-gray-400" />
-                        <h3 className="font-semibold text-gray-900">Visit Information</h3>
+                        <h3 className="font-semibold text-sec-clr">Visit Information</h3>
                     </div>
                     <div className="space-y-3">
                         <div className="flex justify-between py-2 border-b border-gray-50">
@@ -280,7 +290,7 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
                         </div>
                         <div className="flex justify-between py-2 border-b border-gray-50">
                             <span className="text-sm text-gray-500">Date</span>
-                            <span className="text-sm text-gray-700">
+                            <span className="text-sm text-sec-clr">
                                 {new Date(visit.createdAt).toLocaleDateString("en-GB", {
                                     day: "2-digit",
                                     month: "short",
@@ -290,7 +300,7 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
                         </div>
                         <div className="flex justify-between py-2 border-b border-gray-50">
                             <span className="text-sm text-gray-500">Time</span>
-                            <span className="text-sm text-gray-700">
+                            <span className="text-sm text-sec-clr">
                                 {new Date(visit.createdAt).toLocaleTimeString("en-GB", {
                                     hour: "2-digit",
                                     minute: "2-digit",
@@ -300,7 +310,7 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
                         {visit.appointmentType && (
                             <div className="flex justify-between py-2 border-b border-gray-50">
                                 <span className="text-sm text-gray-500">Service Type</span>
-                                <span className="text-sm text-gray-700">
+                                <span className="text-sm text-sec-clr">
                                     {APPOINTMENT_TYPE_LABELS[visit.appointmentType] ||
                                         visit.appointmentType}
                                 </span>
@@ -323,12 +333,12 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
                     <div className="bg-pry-clr rounded-xl border border-gray-100 p-6 shadow-sm">
                         <div className="flex items-center gap-2 mb-4">
                             <CreditCard className="w-5 h-5 text-gray-400" />
-                            <h3 className="font-semibold text-gray-900">Payment Details</h3>
+                            <h3 className="font-semibold text-sec-clr">Payment Details</h3>
                         </div>
                         <div className="space-y-3">
                             <div className="flex justify-between py-2 border-b border-gray-50">
                                 <span className="text-sm text-gray-500">Professional Fee</span>
-                                <span className="text-sm text-gray-700">
+                                <span className="text-sm text-sec-clr">
                                     {new Intl.NumberFormat("en-NG", {
                                         style: "currency",
                                         currency: "NGN",
@@ -337,7 +347,7 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
                             </div>
                             <div className="flex justify-between py-2 border-b border-gray-50">
                                 <span className="text-sm text-gray-500">VAT (7.5%)</span>
-                                <span className="text-sm text-gray-700">
+                                <span className="text-sm text-sec-clr">
                                     {new Intl.NumberFormat("en-NG", {
                                         style: "currency",
                                         currency: "NGN",
@@ -346,7 +356,7 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
                             </div>
                             <div className="flex justify-between py-2 pt-2">
                                 <span className="text-sm font-semibold text-sec-clr">Total</span>
-                                <span className="text-lg font-bold text-gray-900">
+                                <span className="text-lg font-bold text-sec-clr">
                                     {new Intl.NumberFormat("en-NG", {
                                         style: "currency",
                                         currency: "NGN",
@@ -363,7 +373,7 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
                                             : "bg-gray-50"
                                     }`}
                                 >
-                                    <span className="text-sm font-medium text-gray-700">
+                                    <span className="text-sm font-medium text-sec-clr">
                                         Payment Status
                                     </span>
                                     <span
@@ -454,6 +464,13 @@ export default function RecordDetails({ visitId }: RecordDetailsProps) {
                     </div>
                 </div>
             )}
+
+            <button
+                onClick={handleTimeline}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-acc-clr text-acc-clr text-sm font-semibold py-3 hover:bg-acc-clr hover:text-pry-clr cursor-pointer transition-colors">
+                <TrendingUp size={15} />
+                View Health Timeline
+            </button>
         </div>
     );
 }

@@ -1,3 +1,5 @@
+// app/dashboard/records/[id]/page.tsx
+
 import { Metadata } from "next";
 import RecordDetails from "@/components/clinic/record-details";
 
