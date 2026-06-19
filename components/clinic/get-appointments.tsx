@@ -15,6 +15,7 @@ const STATUS_STYLES: Record<Appointment["status"], string> = {
     confirmed: "bg-green-50 text-green-700 border border-green-200",
     cancelled: "bg-red-50 text-red-700 border border-red-200",
     completed: "bg-blue-50 text-blue-700 border border-blue-200",
+    missed:    "bg-gray-50 text-gray-700 border border-gray-200",
 };
 
 const DATE_RANGES: { label: string; value: DateRange }[] = [

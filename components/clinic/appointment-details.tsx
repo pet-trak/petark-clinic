@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
     Calendar,
     Clock,
@@ -15,8 +15,10 @@ import {
     CheckCircle,
     ArrowRight,
     MessageCircle,
+    XCircle,
 } from "lucide-react";
 import { getAppointmentById, type Appointment } from "@/lib/appointment";
+import { getVisit, type Visit } from "@/lib/visit";
 import Link from "next/link";
 
 const STATUS_STYLES: Record<Appointment["status"], string> = {
@@ -24,6 +26,7 @@ const STATUS_STYLES: Record<Appointment["status"], string> = {
     confirmed: "bg-emerald-50 text-emerald-700 border-emerald-200",
     cancelled: "bg-red-50 text-red-700 border-red-200",
     completed: "bg-blue-50 text-blue-700 border-blue-200",
+    missed: "bg-gray-50 text-gray-700 border-gray-200",
 };
 
 const STATUS_ICONS: Record<Appointment["status"], React.ReactNode> = {
@@ -31,6 +34,7 @@ const STATUS_ICONS: Record<Appointment["status"], React.ReactNode> = {
     confirmed: <CheckCircle size={14} />,
     cancelled: <AlertCircle size={14} />,
     completed: <CheckCircle size={14} />,
+    missed: <XCircle size={14} />,
 };
 
 function formatDate(dateString: string) {
@@ -67,20 +71,28 @@ export default function AppointmentDetails() {
     const params = useParams();
     const appointmentId = params?.id as string;
 
-    
     const [appointment, setAppointment] = useState<Appointment | null>(null);
+    const [visit, setVisit] = useState<Visit | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         if (!appointmentId) return;
 
-        async function fetchAppointment() {
+        async function fetchData() {
             setLoading(true);
             setError(null);
             try {
-                const data = await getAppointmentById(appointmentId);
-                setAppointment(data);
+                const [apptData, visitsData] = await Promise.all([
+                    getAppointmentById(appointmentId),
+                    getVisit(),
+                ]);
+                setAppointment(apptData);
+                
+                // Find the visit for this appointment
+                const existingVisit = visitsData.find(v => v.appointmentId === appointmentId);
+                setVisit(existingVisit || null);
             } catch (err) {
                 setError("Failed to load appointment details");
                 console.error(err);
@@ -89,7 +101,7 @@ export default function AppointmentDetails() {
             }
         }
 
-        fetchAppointment();
+        fetchData();
     }, [appointmentId]);
 
     if (loading) {
@@ -135,6 +147,11 @@ export default function AppointmentDetails() {
     const createdDate = formatShortDate(appointment.createdAt);
     const appointmentDate = formatDate(appointment.date || appointment.appointmentDate || appointment.createdAt);
     const appointmentTime = formatTime(appointment.date || appointment.appointmentTime || appointment.createdAt);
+
+    // Check if visit exists and is in-progress
+    const hasActiveVisit = visit && visit.status === "in-progress";
+    // Check if appointment is confirmed
+    const isConfirmed = appointment.status === "confirmed";
 
     return (
         <section className="min-h-screen bg-linear-to-br from-gray-50 to-white pry-ff">
@@ -259,13 +276,31 @@ export default function AppointmentDetails() {
                             </div>
                         </div>
 
-                        {/* Clinical Actions */}
-                        <div className="bg-pry-clr rounded-2xl border border-gray-100 shadow-sm p-6">
-                            <button className="w-full bg-acc-clr text-pry-clr py-3 px-4 rounded-xl font-medium hover:bg-acc-clr/90 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2">
-                                Start Clinical 
-                                <ArrowRight size={16} />
-                            </button>
-                        </div>
+                        {/* Clinical Actions - Show only when appointment is confirmed AND no active visit exists */}
+                        {isConfirmed && !hasActiveVisit && (
+                            <div className="bg-pry-clr rounded-2xl border border-gray-100 shadow-sm p-6">
+                                <button
+                                    onClick={() => router.push(`/dashboard/appointments/${appointmentId}/create-visit`)}
+                                    className="w-full bg-acc-clr text-pry-clr py-3 px-4 rounded-xl font-medium hover:bg-acc-clr/90 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+                                >
+                                    Start Clinical
+                                    <ArrowRight size={16} />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Show visit status if active */}
+                        {hasActiveVisit && (
+                            <div className="bg-pry-clr rounded-2xl border border-green-200 shadow-sm p-6 bg-green-50/30">
+                                <div className="flex items-center gap-3 text-green-700">
+                                    <CheckCircle size={20} />
+                                    <span className="font-medium">Visit is currently in progress</span>
+                                </div>
+                                <p className="text-sm text-gray-600 mt-2">
+                                    A clinical visit has already been started for this appointment.
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right Column - Side Info */}
