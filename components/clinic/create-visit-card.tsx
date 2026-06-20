@@ -142,6 +142,7 @@ export default function CreateVisitCard() {
 
     const pet = appointment.pet;
     const clinicServices: ClinicService[] = clinic?.servicesProvided ?? [];
+    // console.log("clinicServices raw:", JSON.stringify(clinicServices));
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-8 space-y-8 pry-ff bg-pry-clr rounded-lg shadow">
@@ -174,31 +175,31 @@ export default function CreateVisitCard() {
             {clinicServices.length > 0 && (
                 <section className="space-y-3">
                     <h2 className="text-sm font-semibold text-sec-clr uppercase tracking-wide">
-                        Services{" "}
+                        Services
                     </h2>
                     <div className="flex flex-wrap gap-2">
-                        {clinicServices.map((service) => {
-                            const selected = servicesProvided.includes(service._id);
-                            return (
-                                <button
-                                    key={service._id}
-                                    type="button"
-                                    onClick={() => toggleService(service._id)}
-                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                                        selected
-                                            ? "bg-acc-clr text-pry-clr border-acc-clr"
-                                            : "bg-white text-gray-600 border-gray-200 hover:border-acc-clr"
-                                    }`}
-                                >
-                                    {service.name}
-                                    {service.price != null && (
-                                        <span className="ml-1.5 opacity-70">
-                                            ₦{service.price.toLocaleString()}
-                                        </span>
-                                    )}
-                                </button>
-                            );
-                        })}
+{clinicServices.map((service) => {
+    const selected = servicesProvided.includes(service._id);
+    return (
+        <button
+            key={service._id}
+            type="button"
+            onClick={() => toggleService(service._id)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                selected
+                    ? "bg-acc-clr text-pry-clr border-acc-clr"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-acc-clr"
+            }`}
+        >
+            {service.name}
+            {service.price != null && (
+                <span className="ml-1.5 opacity-70">
+                    ₦{service.price.toLocaleString()}
+                </span>
+            )}
+        </button>
+    );
+})}
                     </div>
                     {servicesProvided.length > 0 && (
                         <p className="text-xs text-gray-400">
