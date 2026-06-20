@@ -2,7 +2,7 @@
 
 import api from "./api";
 import axiosError from "axios";
-import { type AppointmentType } from "@/lib/appointment-types";
+import { type ClinicService } from "./user";
 
 interface Vitals {
     weight: number;      // in kg
@@ -44,7 +44,7 @@ interface ApiVisitResponse {
     vetId: string | null;
     status: "in-progress" | "completed";
     vitals: Vitals;
-    appointmentType?: AppointmentType;
+    servicesProvided?: string[] | ClinicService[];
     notes?: string;
     billing: Billing;
     paymentStatus: "unpaid" | "paid" | "failed" | "refunded";
@@ -72,7 +72,7 @@ export interface CreateVisitPayload {
     appointmentId: string;
     petId: string;
     vetId?: string;
-    appointmentType?: AppointmentType;
+    servicesProvided?: string[]; // Array of service IDs
     vitals: Vitals;
     notes?: string;
 }
@@ -86,8 +86,6 @@ interface CreateVisitResponse {
 
 export interface UpdateVisitVitalsPayload {
     vitals?: Partial<Vitals>;
-    appointmentType?: AppointmentType;
-    notes?: string;
 }
 
 interface UpdateVisitVitalsResponse {
@@ -96,6 +94,8 @@ interface UpdateVisitVitalsResponse {
         visit: ApiVisitResponse;
     };
 }
+
+// ─── API Functions ─────────────────────────────────────────────────────────
 
 export async function createVisit(payload: CreateVisitPayload): Promise<ApiVisitResponse> {
     try {
@@ -145,6 +145,9 @@ export async function getVisit(): Promise<Visit[]> {
     }
 }
 
+
+// ─── Helper Functions ──────────────────────────────────────────────────────
+
 export function getAdministeredByDisplay(visit: Visit): string {
     if (visit.vetId && visit.vet?.name) {
         return `Dr. ${visit.vet.name}`;
@@ -153,4 +156,19 @@ export function getAdministeredByDisplay(visit: Visit): string {
         return "Vet";
     }
     return "Clinic Staff";
+}
+
+
+export async function completeVisit(visitId: string): Promise<ApiVisitResponse> {
+    try {
+        const response = await api.patch<{ status: string; data: ApiVisitResponse }>(
+            `/visit/complete/${visitId}`
+        );
+        return response.data.data;
+    } catch (error) {
+        if (axiosError.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || "Failed to complete visit");
+        }
+        throw new Error("An unexpected error occurred while completing visit");
+    }
 }

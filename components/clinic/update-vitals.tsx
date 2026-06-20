@@ -1,12 +1,8 @@
-// components/clinic/update-vitals.tsx
-
 "use client";
 
 import { useState } from "react";
 import { updateVisitVitals } from "@/lib/visit";
-import type { Visit, UpdateVisitVitalsPayload } from "@/lib/visit";
-import { APPOINTMENT_TYPE_LABELS } from "@/lib/appointment-types";
-import type { AppointmentType } from "@/lib/appointment-types";
+import type { Visit } from "@/lib/visit";
 import { AlertCircle, Loader2, X, Check } from "lucide-react";
 
 interface UpdateVitalsProps {
@@ -22,8 +18,6 @@ interface FormState {
     respiration: string;
     appetite: string;
     activity: string;
-    appointmentType: string;
-    notes: string;
 }
 
 function initForm(visit: Visit): FormState {
@@ -34,15 +28,13 @@ function initForm(visit: Visit): FormState {
         respiration: String(visit.vitals?.respiration ?? ""),
         appetite: visit.vitals?.appetite ?? "",
         activity: visit.vitals?.activity ?? "",
-        appointmentType: visit.appointmentType ?? "",
-        notes: visit.notes ?? "",
     };
 }
 
 const inputCls =
     "w-full text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-acc-clr focus:border-transparent";
 
-export default function UpdateVitals({ visit, onSaved, onCancel }: UpdateVitalsProps) {
+export default function UpdateVitals({ visit, onSaved, onCancel }: Readonly<UpdateVitalsProps>) {
     const [form, setForm] = useState<FormState>(() => initForm(visit));
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -54,38 +46,17 @@ export default function UpdateVitals({ visit, onSaved, onCancel }: UpdateVitalsP
     async function handleSave() {
         setSaving(true);
         setError(null);
-
-        const payload: UpdateVisitVitalsPayload = {};
-
-        const hasVitalsChange =
-            form.weight !== String(visit.vitals?.weight ?? "") ||
-            form.temp !== String(visit.vitals?.temp ?? "") ||
-            form.pulse !== String(visit.vitals?.pulse ?? "") ||
-            form.respiration !== String(visit.vitals?.respiration ?? "") ||
-            form.appetite !== (visit.vitals?.appetite ?? "") ||
-            form.activity !== (visit.vitals?.activity ?? "");
-
-        if (hasVitalsChange) {
-            payload.vitals = {
-                weight: parseFloat(form.weight),
-                temp: parseFloat(form.temp),
-                pulse: parseFloat(form.pulse),
-                respiration: parseFloat(form.respiration),
-                appetite: form.appetite,
-                activity: form.activity,
-            };
-        }
-
-        if (form.appointmentType && form.appointmentType !== visit.appointmentType) {
-            payload.appointmentType = form.appointmentType as AppointmentType;
-        }
-
-        if (form.notes !== (visit.notes ?? "")) {
-            payload.notes = form.notes;
-        }
-
         try {
-            const updated = await updateVisitVitals(visit._id, payload);
+            const updated = await updateVisitVitals(visit._id, {
+                vitals: {
+                    weight: parseFloat(form.weight),
+                    temp: parseFloat(form.temp),
+                    pulse: parseFloat(form.pulse),
+                    respiration: parseFloat(form.respiration),
+                    appetite: form.appetite,
+                    activity: form.activity,
+                },
+            });
             onSaved({ ...visit, ...updated });
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to save changes");
@@ -113,11 +84,7 @@ export default function UpdateVitals({ visit, onSaved, onCancel }: UpdateVitalsP
                         disabled={saving}
                         className="flex items-center gap-1.5 text-xs text-white bg-acc-clr hover:opacity-90 px-3 py-1.5 rounded-lg transition-opacity disabled:opacity-60"
                     >
-                        {saving ? (
-                            <Loader2 size={13} className="animate-spin" />
-                        ) : (
-                            <Check size={13} />
-                        )}
+                        {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
                         {saving ? "Saving…" : "Save changes"}
                     </button>
                 </div>
@@ -192,67 +159,27 @@ export default function UpdateVitals({ visit, onSaved, onCancel }: UpdateVitalsP
                         <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
                             Activity Level
                         </label>
-                        <select
+                        <input
+                            type="text"
                             value={form.activity}
                             onChange={(e) => handleChange("activity", e.target.value)}
+                            placeholder="e.g. high, medium, low"
                             className={inputCls}
-                        >
-                            <option value="">— select —</option>
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                        </select>
+                        />
                     </div>
                     <div>
                         <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
                             Appetite
                         </label>
-                        <select
+                        <input
+                            type="text"
                             value={form.appetite}
                             onChange={(e) => handleChange("appetite", e.target.value)}
+                            placeholder="e.g. good, fair, poor"
                             className={inputCls}
-                        >
-                            <option value="">— select —</option>
-                            <option value="poor">Poor</option>
-                            <option value="fair">Fair</option>
-                            <option value="good">Good</option>
-                        </select>
+                        />
                     </div>
                 </div>
-            </div>
-
-            {/* Visit Info */}
-            <div className="bg-pry-clr rounded-xl border border-gray-100 p-6 shadow-sm">
-                <h3 className="text-sm font-semibold text-sec-clr mb-4">Visit Information</h3>
-                <div>
-                    <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
-                        Service Type
-                    </label>
-                    <select
-                        value={form.appointmentType}
-                        onChange={(e) => handleChange("appointmentType", e.target.value)}
-                        className={inputCls}
-                    >
-                        <option value="">— select —</option>
-                        {Object.entries(APPOINTMENT_TYPE_LABELS).map(([key, label]) => (
-                            <option key={key} value={key}>
-                                {label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
-            {/* Notes */}
-            <div className="bg-pry-clr rounded-xl border border-gray-100 p-6 shadow-sm">
-                <h3 className="text-sm font-semibold text-sec-clr mb-4">Clinical Notes</h3>
-                <textarea
-                    rows={5}
-                    value={form.notes}
-                    onChange={(e) => handleChange("notes", e.target.value)}
-                    placeholder="Add clinical notes…"
-                    className={`${inputCls} resize-none`}
-                />
             </div>
         </div>
     );

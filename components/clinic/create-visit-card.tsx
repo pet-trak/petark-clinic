@@ -1,18 +1,28 @@
 "use client";
 
-// app/dashboard/appointments/[id]/create-visit/page.tsx
-
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2, ArrowLeft, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
-import { getUser, type User } from "@/lib/user";
-import { APPOINTMENT_TYPE_LABELS, type AppointmentType } from "@/lib/appointment-types";
-
+import { getUser, type User, type ClinicService } from "@/lib/user";
 import { getAppointmentById, type Appointment } from "@/lib/appointment";
-import { createVisit, type CreateVisitPayload } from "@/lib/visit";
+import { createVisit } from "@/lib/visit";
 
-const EMPTY_VITALS: CreateVisitPayload["vitals"] = {
+interface Vitals {
+    weight: number;
+    temp: number;
+    pulse: number;
+    respiration: number;
+    appetite: string;
+    activity: string;
+}
+
+type VitalErrors = Partial<Record<keyof Vitals, string>>;
+
+const NUMERIC_VITAL_FIELDS = ["weight", "temp", "pulse", "respiration"] as const;
+type NumericVitalField = (typeof NUMERIC_VITAL_FIELDS)[number];
+
+const EMPTY_VITALS: Vitals = {
     weight: 0,
     temp: 0,
     pulse: 0,
@@ -29,14 +39,12 @@ export default function CreateVisitCard() {
     const [clinic, setClinic] = useState<User | null>(null);
     const [loadingAppt, setLoadingAppt] = useState(true);
 
-    const [vitals, setVitals] = useState(EMPTY_VITALS);
+    const [vitals, setVitals] = useState<Vitals>(EMPTY_VITALS);
     const [notes, setNotes] = useState("");
     const [vetId, setVetId] = useState("");
-    const [appointmentType, setAppointmentType] = useState<AppointmentType | "">("");
+    const [servicesProvided, setServicesProvided] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
-
-    // track which numeric fields have been blurred with a bad value
-    const [vitalErrors, setVitalErrors] = useState<Partial<Record<keyof CreateVisitPayload["vitals"], string>>>({});
+    const [vitalErrors, setVitalErrors] = useState<VitalErrors>({});
 
     useEffect(() => {
         async function load() {
@@ -57,22 +65,28 @@ export default function CreateVisitCard() {
         load();
     }, [id]);
 
-    function handleVitalChange(field: keyof CreateVisitPayload["vitals"], value: string) {
-        // clear error as soon as user starts correcting
+    function toggleService(serviceId: string) {
+        setServicesProvided((prev) =>
+            prev.includes(serviceId)
+                ? prev.filter((s) => s !== serviceId)
+                : [...prev, serviceId]
+        );
+    }
+
+    function handleVitalChange(field: keyof Vitals, value: string) {
         if (vitalErrors[field]) {
             setVitalErrors((prev) => ({ ...prev, [field]: undefined }));
         }
         setVitals((prev) => ({
             ...prev,
-            [field]: ["weight", "temp", "pulse", "respiration"].includes(field)
+            [field]: (NUMERIC_VITAL_FIELDS as readonly string[]).includes(field)
                 ? parseFloat(value) || 0
                 : value,
         }));
     }
 
-    function handleVitalBlur(field: keyof CreateVisitPayload["vitals"], value: string | number) {
-        const numericFields = ["weight", "temp", "pulse", "respiration"] as const;
-        if (numericFields.includes(field as typeof numericFields[number])) {
+    function handleVitalBlur(field: keyof Vitals, value: string | number) {
+        if ((NUMERIC_VITAL_FIELDS as readonly string[]).includes(field)) {
             const num = typeof value === "string" ? parseFloat(value) : value;
             if (isNaN(num) || num < 0) {
                 setVitalErrors((prev) => ({
@@ -86,10 +100,8 @@ export default function CreateVisitCard() {
     async function handleSubmit() {
         if (!appointment) return;
 
-        // guard: block submit if any numeric vital is still invalid
-        const numericFields = ["weight", "temp", "pulse", "respiration"] as const;
-        const newErrors: typeof vitalErrors = {};
-        for (const field of numericFields) {
+        const newErrors: VitalErrors = {};
+        for (const field of NUMERIC_VITAL_FIELDS) {
             if (vitals[field] < 0) {
                 newErrors[field] = "Value must be a positive number.";
             }
@@ -105,7 +117,7 @@ export default function CreateVisitCard() {
                 appointmentId: appointment._id,
                 petId: appointment.petId,
                 ...(vetId.trim() ? { vetId: vetId.trim() } : {}),
-                ...(appointmentType ? { appointmentType } : {}),
+                ...(servicesProvided.length > 0 ? { servicesProvided } : {}),
                 vitals,
                 notes: notes.trim() || undefined,
             });
@@ -129,6 +141,7 @@ export default function CreateVisitCard() {
     if (!appointment) return null;
 
     const pet = appointment.pet;
+    const clinicServices: ClinicService[] = clinic?.servicesProvided ?? [];
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-8 space-y-8 pry-ff bg-pry-clr rounded-lg shadow">
@@ -157,24 +170,43 @@ export default function CreateVisitCard() {
                 </div>
             </div>
 
-            {/* Appointment Type */}
-            <section className="space-y-2">
-                <h2 className="text-sm font-semibold text-sec-clr uppercase tracking-wide">
-                    Appointment Type <span className="text-gray-400 normal-case font-normal">(optional)</span>
-                </h2>
-                <select
-                    value={appointmentType}
-                    onChange={(e) => setAppointmentType(e.target.value as AppointmentType | "")}
-                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-acc-clr focus:border-acc-clr transition"
-                >
-                    <option value="">Select appointment type</option>
-                    {(clinic?.servicesProvided ?? []).map((service) => (
-                        <option key={service} value={service}>
-                            {APPOINTMENT_TYPE_LABELS[service as AppointmentType] ?? service}
-                        </option>
-                    ))}
-                </select>
-            </section>
+            {/* Services */}
+            {clinicServices.length > 0 && (
+                <section className="space-y-3">
+                    <h2 className="text-sm font-semibold text-sec-clr uppercase tracking-wide">
+                        Services{" "}
+                    </h2>
+                    <div className="flex flex-wrap gap-2">
+                        {clinicServices.map((service) => {
+                            const selected = servicesProvided.includes(service._id);
+                            return (
+                                <button
+                                    key={service._id}
+                                    type="button"
+                                    onClick={() => toggleService(service._id)}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                                        selected
+                                            ? "bg-acc-clr text-pry-clr border-acc-clr"
+                                            : "bg-white text-gray-600 border-gray-200 hover:border-acc-clr"
+                                    }`}
+                                >
+                                    {service.name}
+                                    {service.price != null && (
+                                        <span className="ml-1.5 opacity-70">
+                                            ₦{service.price.toLocaleString()}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    {servicesProvided.length > 0 && (
+                        <p className="text-xs text-gray-400">
+                            {servicesProvided.length} service{servicesProvided.length > 1 ? "s" : ""} selected
+                        </p>
+                    )}
+                </section>
+            )}
 
             {/* Vitals */}
             <section className="space-y-4">
@@ -238,12 +270,12 @@ export default function CreateVisitCard() {
                     rows={4}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Use the SOAP format: Subjective, Objective, Assessment, Plan. For example: 'Subjective: Owner reports lethargy and loss of appetite. Objective: Temp 39.5°C, pulse 120 bpm, weight 5kg. Assessment: Possible infection. Plan: Run bloodwork and start on antibiotics.'"
+                    placeholder="Use the SOAP format: Subjective, Objective, Assessment, Plan."
                     className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-acc-clr focus:border-acc-clr transition resize-none"
                 />
             </section>
 
-            {/* Optional vet ID */}
+            {/* Vet */}
             <section className="space-y-2">
                 <h2 className="text-sm font-semibold text-sec-clr uppercase tracking-wide">
                     Vet <span className="text-gray-400 normal-case font-normal">(optional)</span>
@@ -312,9 +344,7 @@ function Field({ label, value, onChange, onBlur, type = "text", placeholder, min
                     error ? "border-red-300 bg-red-50" : "border-gray-200"
                 }`}
             />
-            {error && (
-                <p className="text-xs text-red-500">{error}</p>
-            )}
+            {error && <p className="text-xs text-red-500">{error}</p>}
         </div>
     );
 }

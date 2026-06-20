@@ -1,12 +1,11 @@
-// components/clinic/record-details.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
 import { getVisit, getAdministeredByDisplay } from "@/lib/visit";
 import type { Visit } from "@/lib/visit";
-import { APPOINTMENT_TYPE_LABELS } from "@/lib/appointment-types";
+import { getUser, type ClinicService } from "@/lib/user";
 import UpdateVitals from "@/components/clinic/update-vitals";
+import CompleteVisitBtn from "@/components/clinic/complete-visit-btn";
 import {
     AlertCircle,
     Stethoscope,
@@ -23,6 +22,7 @@ import {
     XCircle,
     Pencil,
     TrendingUp,
+    Plus,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -79,32 +79,41 @@ function RecordDetailsSkeleton() {
 
 export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>) {
     const [visit, setVisit] = useState<Visit | null>(null);
+    const [clinicServices, setClinicServices] = useState<ClinicService[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
-        async function fetchVisitRecord() {
+        async function fetchData() {
             if (!visitId) return;
             setLoading(true);
             setError(null);
             try {
-                const visits = await getVisit();
+                const [visits, clinic] = await Promise.all([
+                    getVisit(),
+                    getUser(),
+                ]);
+
                 const foundVisit = visits.find((v) => v._id === visitId);
                 if (foundVisit) {
                     setVisit(foundVisit);
                 } else {
                     setError("Visit record not found");
                 }
+
+                if (clinic?.servicesProvided) {
+                    setClinicServices(clinic.servicesProvided);
+                }
             } catch (err) {
                 setError("Failed to load visit record details");
-                console.error("Error fetching visit:", err);
+                console.error("Error fetching data:", err);
             } finally {
                 setLoading(false);
             }
         }
-        fetchVisitRecord();
+        fetchData();
     }, [visitId]);
 
     function handleSaved(updated: Visit) {
@@ -116,6 +125,36 @@ export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>)
         if (!visit) return;
         router.push(`/dashboard/records/pet/${visit.petId}/timeline?userId=${visit.userId}`);
     };
+
+    const getServiceDetails = (serviceId: string): ClinicService | undefined => {
+        return clinicServices.find((s) => s._id === serviceId);
+    };
+
+    const getVisitServices = (): ClinicService[] => {
+        if (!visit?.servicesProvided || !Array.isArray(visit.servicesProvided)) return [];
+
+        if (
+            visit.servicesProvided.length > 0 &&
+            typeof visit.servicesProvided[0] === "object" &&
+            "name" in visit.servicesProvided[0]
+        ) {
+            return visit.servicesProvided as ClinicService[];
+        }
+
+        if (
+            visit.servicesProvided.length > 0 &&
+            typeof visit.servicesProvided[0] === "string"
+        ) {
+            return (visit.servicesProvided as string[])
+                .map((id) => getServiceDetails(id))
+                .filter((s): s is ClinicService => s !== undefined);
+        }
+
+        return [];
+    };
+
+    const visitServices = getVisitServices();
+    const serviceCount = visitServices.length;
 
     if (loading) return <RecordDetailsSkeleton />;
 
@@ -148,8 +187,6 @@ export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>)
     }
 
     const vitals = visit.vitals;
-    const appetiteWidth =
-        vitals?.appetite === "good" ? "90%" : vitals?.appetite === "fair" ? "60%" : "30%";
 
     return (
         <div className="space-y-6">
@@ -180,7 +217,7 @@ export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>)
                                             : "bg-yellow-100 text-yellow-700"
                                     }`}
                                 >
-                                    {visit.status}
+                                    {visit.status === "completed" ? "Completed" : "In Progress"}
                                 </span>
                             </div>
                             <p className="text-gray-500 text-sm mb-3">
@@ -201,13 +238,45 @@ export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>)
                                 </div>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setIsEditing(true)}
-                            className="flex items-center gap-1.5 text-xs text-gray-500 border border-gray-200 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors shrink-0"
-                        >
-                            <Pencil size={13} />
-                            Edit
-                        </button>
+                        <div className="flex flex-col gap-2">
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="flex items-center gap-1.5 text-xs text-gray-500 border border-gray-200 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors shrink-0"
+                            >
+                                <Pencil size={13} />
+                                Edit Vitals
+                            </button>
+                            <CompleteVisitBtn visit={visit} onComplete={handleSaved} />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Services Provided */}
+            {serviceCount > 0 && (
+                <div className="bg-pry-clr rounded-xl border border-gray-100 p-6 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Plus className="w-5 h-5 text-gray-400" />
+                        <h3 className="font-semibold text-sec-clr">Services Provided</h3>
+                        <span className="ml-auto text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
+                            {serviceCount} {serviceCount === 1 ? "service" : "services"}
+                        </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {visitServices.map((service, index) => (
+                            <span
+                                key={index}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-full border border-blue-100"
+                            >
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                {service.name}
+                                {service.price && (
+                                    <span className="text-gray-400 text-xs">
+                                        (₦{service.price.toLocaleString()})
+                                    </span>
+                                )}
+                            </span>
+                        ))}
                     </div>
                 </div>
             )}
@@ -307,12 +376,11 @@ export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>)
                                 })}
                             </span>
                         </div>
-                        {visit.appointmentType && (
+                        {serviceCount > 0 && (
                             <div className="flex justify-between py-2 border-b border-gray-50">
-                                <span className="text-sm text-gray-500">Service Type</span>
-                                <span className="text-sm text-sec-clr">
-                                    {APPOINTMENT_TYPE_LABELS[visit.appointmentType] ||
-                                        visit.appointmentType}
+                                <span className="text-sm text-gray-500">Services</span>
+                                <span className="text-sm text-sec-clr text-right max-w-[60%]">
+                                    {visitServices.map((s) => s.name).join(", ")}
                                 </span>
                             </div>
                         )}
@@ -346,7 +414,7 @@ export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>)
                                 </span>
                             </div>
                             <div className="flex justify-between py-2 border-b border-gray-50">
-                                <span className="text-sm text-gray-500">VAT (7.5%)</span>
+                                <span className="text-sm text-gray-500">VAT (16%)</span>
                                 <span className="text-sm text-sec-clr">
                                     {new Intl.NumberFormat("en-NG", {
                                         style: "currency",
@@ -400,52 +468,33 @@ export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>)
             </div>
 
             {/* Clinical Assessment */}
-            {vitals && (
+            {vitals && (vitals.activity || vitals.appetite) && (
                 <div className="bg-pry-clr rounded-xl border border-gray-100 p-6 shadow-sm">
                     <div className="flex items-center gap-2 mb-4">
                         <Activity className="w-5 h-5 text-gray-400" />
                         <h3 className="font-semibold text-sec-clr">Clinical Assessment</h3>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div>
-                            <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-                                Activity Level
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-acc-clr rounded-full"
-                                        style={{
-                                            width:
-                                                vitals.activity === "high"
-                                                    ? "90%"
-                                                    : vitals.activity === "medium"
-                                                    ? "60%"
-                                                    : "30%",
-                                        }}
-                                    />
-                                </div>
-                                <span className="text-sm font-medium text-gray-700 capitalize">
+                        {vitals.activity && (
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                                    Activity Level
+                                </p>
+                                <p className="text-sm font-medium text-gray-700 capitalize">
                                     {vitals.activity}
-                                </span>
+                                </p>
                             </div>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-                                Appetite
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-blue-500 rounded-full"
-                                        style={{ width: appetiteWidth }}
-                                    />
-                                </div>
-                                <span className="text-sm font-medium text-gray-700 capitalize">
+                        )}
+                        {vitals.appetite && (
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                                    Appetite
+                                </p>
+                                <p className="text-sm font-medium text-gray-700 capitalize">
                                     {vitals.appetite}
-                                </span>
+                                </p>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -467,7 +516,8 @@ export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>)
 
             <button
                 onClick={handleTimeline}
-                className="w-full flex items-center justify-center gap-2 rounded-xl border border-acc-clr text-acc-clr text-sm font-semibold py-3 hover:bg-acc-clr hover:text-pry-clr cursor-pointer transition-colors">
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-acc-clr text-acc-clr text-sm font-semibold py-3 hover:bg-acc-clr hover:text-pry-clr cursor-pointer transition-colors"
+            >
                 <TrendingUp size={15} />
                 View Health Timeline
             </button>
