@@ -31,7 +31,7 @@ function StatusBadge({ status }: Readonly<{ status: Visit["status"] }>) {
         "in-progress": "bg-blue-50 text-blue-700 p-1 rounded-md",
         "completed": "bg-green-50 text-green-700 p-1 rounded-md",
     };
-    
+
     return (
         <span className={`text-xs font-medium ${styles[status]}`}>
             {status === "in-progress" ? "IN PROGRESS" : "COMPLETED"}
@@ -66,9 +66,7 @@ export default function GetVisits() {
             setError(null);
             try {
                 const data = await getVisit();
-                if (!cancelled) {
-                    setVisits(data);
-                }
+                if (!cancelled) setVisits(data);
             } catch (err) {
                 if (!cancelled) {
                     setError(err instanceof Error ? err.message : "Failed to load visits");
@@ -87,8 +85,7 @@ export default function GetVisits() {
             <section className="space-y-4 w-full max-w-md">
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-sec-clr pry-ff">Recent Visits</h2>
-                    <Link href="/dashboard/records"
-                        className="text-sm text-sec-clr pry-ff cursor-pointer">
+                    <Link href="/dashboard/records" className="text-sm text-sec-clr pry-ff cursor-pointer">
                         View All
                     </Link>
                 </div>
@@ -146,7 +143,7 @@ export default function GetVisits() {
             <div className="space-y-3">
                 {visits.map((visit) => {
                     const pet = visit.pet;
-                    
+
                     return (
                         <div
                             key={visit._id}
@@ -163,10 +160,17 @@ export default function GetVisits() {
                                 </div>
                             </div>
 
-                            <h3 className="font-semibold text-sec-clr mb-1">
-                                Veterinary Consultation
-                            </h3>
-                            
+                            {/* Chief Complaint */}
+                            {visit.soap?.subjective ? (
+                                <p className="text-sm font-medium text-sec-clr mb-1 line-clamp-1">
+                                    {visit.soap.subjective}
+                                </p>
+                            ) : (
+                                <h3 className="font-semibold text-sec-clr mb-1">
+                                    Veterinary Consultation
+                                </h3>
+                            )}
+
                             <p className="text-sm text-gray-600 mb-3">
                                 Patient: {pet?.name || "Unknown"} ({pet?.breed || "Unknown breed"} · {pet?.species || "Unknown species"})
                             </p>

@@ -5,18 +5,43 @@ import axiosError from "axios";
 import { type ClinicService } from "./user";
 
 interface Vitals {
-    weight: number;      // in kg
-    temp: number;        // in °C
-    pulse: number;       // in bpm
-    respiration: number; // in breaths per minute
-    appetite: string;
-    activity: string;
+    weight: number | null;
+    temp: number | null;
+    pulse: number | null;
+    respiration: number | null;
+    appetite: "normal" | "reduced" | "increased" | "absent" | null;
+    activity: "active" | "lethargic" | "hyperactive" | "normal" | null;
 }
+
+interface SOAP {
+    subjective: string;  // chief complaint — set at createVisit
+    objective: string;   // clinical findings — set at completeVisit
+    assessment: string;  // diagnosis — set at completeVisit
+    plan: string;        // treatment/follow-up — set at completeVisit
+}
+
+export interface CompleteVisitPayload {
+    soap: {
+        subjective?: string; // optional — falls back to createVisit value
+        objective: string;
+        assessment: string;
+        plan: string;
+    }
+};
 
 interface Billing {
     professionalFee: number;
     vat: number;
     total: number;
+}
+
+interface FollowUp {
+    serviceId: string | null;
+    serviceName: string;
+    date: string | null;
+    time: string | null;
+    notes: string;
+    createdAt: string;
 }
 
 interface Pet {
@@ -25,7 +50,7 @@ interface Pet {
     species: string;
     breed: string;
     age: string;
-    weight: string; // in kg
+    weight: string;
     gender: "male" | "female";
     photo?: string;
 }
@@ -33,6 +58,22 @@ interface Pet {
 interface Vet {
     _id: string;
     name?: string;
+}
+
+interface SOAP {
+    subjective: string;
+    objective: string;
+    assessment: string;
+    plan: string;
+}
+
+export interface CompleteVisitPayload {
+    soap: {
+        subjective?: string; // optional — falls back to createVisit value
+        objective: string;
+        assessment: string;
+        plan: string;
+    };
 }
 
 interface ApiVisitResponse {
@@ -44,15 +85,19 @@ interface ApiVisitResponse {
     vetId: string | null;
     status: "in-progress" | "completed";
     vitals: Vitals;
+    soap: SOAP;
     servicesProvided?: string[] | ClinicService[];
-    notes?: string;
+    selectedServices?: ClinicService[];
+    followUps: FollowUp[];
     billing: Billing;
     paymentStatus: "unpaid" | "paid" | "failed" | "refunded";
     createdAt: string;
     completedAt: string | null;
+    paidAt: string | null;
     pet: Pet;
     vet?: Vet;
 }
+
 
 export interface Visit extends ApiVisitResponse {
     administeredBy: string;
@@ -70,18 +115,16 @@ interface GetVisitResponse {
 
 export interface CreateVisitPayload {
     appointmentId: string;
-    petId: string;
     vetId?: string;
-    servicesProvided?: string[]; // Array of service IDs
-    vitals: Vitals;
-    notes?: string;
+    servicesProvided?: string[];
+    vitals?: Partial<Vitals>;
+    chiefComplaint?: string;
+    followUps?: Omit<FollowUp, "createdAt">[];
 }
 
 interface CreateVisitResponse {
     status: string;
-    data: {
-        visit: ApiVisitResponse;
-    };
+    data: ApiVisitResponse;
 }
 
 export interface UpdateVisitVitalsPayload {
@@ -100,7 +143,7 @@ interface UpdateVisitVitalsResponse {
 export async function createVisit(payload: CreateVisitPayload): Promise<ApiVisitResponse> {
     try {
         const response = await api.post<CreateVisitResponse>("/visit", payload);
-        return response.data.data.visit;
+        return response.data.data;
     } catch (error) {
         if (axiosError.isAxiosError(error)) {
             throw new Error(error.response?.data?.message || "Failed to create visit");
@@ -145,7 +188,6 @@ export async function getVisit(): Promise<Visit[]> {
     }
 }
 
-
 // ─── Helper Functions ──────────────────────────────────────────────────────
 
 export function getAdministeredByDisplay(visit: Visit): string {
@@ -158,11 +200,14 @@ export function getAdministeredByDisplay(visit: Visit): string {
     return "Clinic Staff";
 }
 
-
-export async function completeVisit(visitId: string): Promise<ApiVisitResponse> {
+export async function completeVisit(
+    visitId: string,
+    payload: CompleteVisitPayload
+): Promise<ApiVisitResponse> {
     try {
         const response = await api.patch<{ status: string; data: ApiVisitResponse }>(
-            `/visit/complete/${visitId}`
+            `/visit/complete/${visitId}`,
+            payload
         );
         return response.data.data;
     } catch (error) {

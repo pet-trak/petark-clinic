@@ -2,19 +2,27 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Loader2, ArrowLeft, Stethoscope } from "lucide-react";
+import { Loader2, ArrowLeft, Stethoscope, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { getUser, type User, type ClinicService } from "@/lib/user";
 import { getAppointmentById, type Appointment } from "@/lib/appointment";
-import { createVisit } from "@/lib/visit";
+import { createVisit, type CreateVisitPayload } from "@/lib/visit";
 
 interface Vitals {
-    weight: number;
-    temp: number;
-    pulse: number;
-    respiration: number;
-    appetite: string;
-    activity: string;
+    weight: number | null;
+    temp: number | null;
+    pulse: number | null;
+    respiration: number | null;
+    appetite: "normal" | "reduced" | "increased" | "absent" | null;
+    activity: "active" | "lethargic" | "hyperactive" | "normal" | null;
+}
+
+interface FollowUpEntry {
+    serviceId: string | null;
+    serviceName: string;
+    date: string;
+    time: string;
+    notes: string;
 }
 
 type VitalErrors = Partial<Record<keyof Vitals, string>>;
@@ -22,13 +30,16 @@ type VitalErrors = Partial<Record<keyof Vitals, string>>;
 const NUMERIC_VITAL_FIELDS = ["weight", "temp", "pulse", "respiration"] as const;
 type NumericVitalField = (typeof NUMERIC_VITAL_FIELDS)[number];
 
+const APPETITE_OPTIONS = ["normal", "reduced", "increased", "absent"] as const;
+const ACTIVITY_OPTIONS = ["active", "lethargic", "hyperactive", "normal"] as const;
+
 const EMPTY_VITALS: Vitals = {
-    weight: 0,
-    temp: 0,
-    pulse: 0,
-    respiration: 0,
-    appetite: "",
-    activity: "",
+    weight: null,
+    temp: null,
+    pulse: null,
+    respiration: null,
+    appetite: null,
+    activity: null,
 };
 
 export default function CreateVisitCard() {
@@ -40,9 +51,10 @@ export default function CreateVisitCard() {
     const [loadingAppt, setLoadingAppt] = useState(true);
 
     const [vitals, setVitals] = useState<Vitals>(EMPTY_VITALS);
-    const [notes, setNotes] = useState("");
+    const [chiefComplaint, setChiefComplaint] = useState("");
     const [vetId, setVetId] = useState("");
     const [servicesProvided, setServicesProvided] = useState<string[]>([]);
+    const [followUps, setFollowUps] = useState<FollowUpEntry[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [vitalErrors, setVitalErrors] = useState<VitalErrors>({});
 
@@ -55,7 +67,6 @@ export default function CreateVisitCard() {
                 ]);
                 setAppointment(appt);
                 setClinic(clinicData);
-                setNotes(appt.notes ?? "");
             } catch {
                 toast.error("Failed to load appointment.");
             } finally {
@@ -77,32 +88,56 @@ export default function CreateVisitCard() {
         if (vitalErrors[field]) {
             setVitalErrors((prev) => ({ ...prev, [field]: undefined }));
         }
-        setVitals((prev) => ({
-            ...prev,
-            [field]: (NUMERIC_VITAL_FIELDS as readonly string[]).includes(field)
-                ? parseFloat(value) || 0
-                : value,
-        }));
-    }
-
-    function handleVitalBlur(field: keyof Vitals, value: string | number) {
         if ((NUMERIC_VITAL_FIELDS as readonly string[]).includes(field)) {
-            const num = typeof value === "string" ? parseFloat(value) : value;
-            if (isNaN(num) || num < 0) {
-                setVitalErrors((prev) => ({
-                    ...prev,
-                    [field]: "Value must be a positive number.",
-                }));
-            }
+            const parsed = parseFloat(value);
+            setVitals((prev) => ({ ...prev, [field]: isNaN(parsed) ? null : parsed }));
+        } else {
+            setVitals((prev) => ({ ...prev, [field]: value || null }));
         }
     }
+
+    function handleVitalBlur(field: NumericVitalField) {
+        const val = vitals[field];
+        if (val !== null && val < 0) {
+            setVitalErrors((prev) => ({
+                ...prev,
+                [field]: "Value must be a positive number.",
+            }));
+        }
+    }
+
+    // ─── Follow-up helpers ────────────────────────────────────────────────────
+
+    function addFollowUp(service: ClinicService) {
+        setFollowUps((prev) => [
+            ...prev,
+            { serviceId: service._id, serviceName: service.name, date: "", time: "", notes: "" },
+        ]);
+    }
+
+    function removeFollowUp(index: number) {
+        setFollowUps((prev) => prev.filter((_, i) => i !== index));
+    }
+
+    function updateFollowUp(index: number, field: keyof FollowUpEntry, value: string) {
+        setFollowUps((prev) =>
+            prev.map((f, i) => (i === index ? { ...f, [field]: value } : f))
+        );
+    }
+
+    const selectedServices = (clinic?.servicesProvided ?? []).filter((s) =>
+        servicesProvided.includes(s._id)
+    );
+
+    // ─── Submit ───────────────────────────────────────────────────────────────
 
     async function handleSubmit() {
         if (!appointment) return;
 
         const newErrors: VitalErrors = {};
         for (const field of NUMERIC_VITAL_FIELDS) {
-            if (vitals[field] < 0) {
+            const val = vitals[field];
+            if (val !== null && val < 0) {
                 newErrors[field] = "Value must be a positive number.";
             }
         }
@@ -111,16 +146,18 @@ export default function CreateVisitCard() {
             return;
         }
 
+        const payload: CreateVisitPayload = {
+            appointmentId: appointment._id,
+            ...(vetId.trim() ? { vetId: vetId.trim() } : {}),
+            ...(servicesProvided.length > 0 ? { servicesProvided } : {}),
+            vitals,
+            ...(chiefComplaint.trim() ? { chiefComplaint: chiefComplaint.trim() } : {}),
+            ...(followUps.length > 0 ? { followUps } : {}),
+        };
+
         setSubmitting(true);
         try {
-            await createVisit({
-                appointmentId: appointment._id,
-                petId: appointment.petId,
-                ...(vetId.trim() ? { vetId: vetId.trim() } : {}),
-                ...(servicesProvided.length > 0 ? { servicesProvided } : {}),
-                vitals,
-                notes: notes.trim() || undefined,
-            });
+            await createVisit(payload);
             toast.success("Visit created successfully.");
             router.push(`/dashboard/appointments/${id}`);
         } catch (err) {
@@ -142,7 +179,6 @@ export default function CreateVisitCard() {
 
     const pet = appointment.pet;
     const clinicServices: ClinicService[] = clinic?.servicesProvided ?? [];
-    // console.log("clinicServices raw:", JSON.stringify(clinicServices));
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-8 space-y-8 pry-ff bg-pry-clr rounded-lg shadow">
@@ -178,33 +214,113 @@ export default function CreateVisitCard() {
                         Services
                     </h2>
                     <div className="flex flex-wrap gap-2">
-{clinicServices.map((service) => {
-    const selected = servicesProvided.includes(service._id);
-    return (
-        <button
-            key={service._id}
-            type="button"
-            onClick={() => toggleService(service._id)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                selected
-                    ? "bg-acc-clr text-pry-clr border-acc-clr"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-acc-clr"
-            }`}
-        >
-            {service.name}
-            {service.price != null && (
-                <span className="ml-1.5 opacity-70">
-                    ₦{service.price.toLocaleString()}
-                </span>
-            )}
-        </button>
-    );
-})}
+                        {clinicServices.map((service) => {
+                            const selected = servicesProvided.includes(service._id);
+                            return (
+                                <button
+                                    key={service._id}
+                                    type="button"
+                                    onClick={() => toggleService(service._id)}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                                        selected
+                                            ? "bg-acc-clr text-pry-clr border-acc-clr"
+                                            : "bg-white text-gray-600 border-gray-200 hover:border-acc-clr"
+                                    }`}
+                                >
+                                    {service.name}
+                                    {service.price != null && (
+                                        <span className="ml-1.5 opacity-70">
+                                            ₦{service.price.toLocaleString()}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                     {servicesProvided.length > 0 && (
                         <p className="text-xs text-gray-400">
                             {servicesProvided.length} service{servicesProvided.length > 1 ? "s" : ""} selected
                         </p>
+                    )}
+                </section>
+            )}
+
+            {/* Follow-ups */}
+            {selectedServices.length > 0 && (
+                <section className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-sm font-semibold text-sec-clr uppercase tracking-wide">
+                                Follow-ups
+                            </h2>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                                Optional — schedule follow-up dates per service
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Add follow-up buttons per selected service */}
+                    <div className="flex flex-wrap gap-2">
+                        {selectedServices.map((service) => {
+                            const alreadyAdded = followUps.some((f) => f.serviceId === service._id);
+                            return (
+                                <button
+                                    key={service._id}
+                                    type="button"
+                                    disabled={alreadyAdded}
+                                    onClick={() => addFollowUp(service)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-dashed border-gray-300 text-gray-500 hover:border-acc-clr hover:text-acc-clr disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <Plus size={11} />
+                                    {service.name}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Follow-up entries */}
+                    {followUps.length > 0 && (
+                        <div className="space-y-3">
+                            {followUps.map((f, i) => (
+                                <div
+                                    key={i}
+                                    className="p-4 rounded-lg border border-gray-200 space-y-3"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-semibold text-acc-clr uppercase tracking-wide">
+                                            {f.serviceName}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeFollowUp(i)}
+                                            className="text-gray-400 hover:text-red-500 transition-colors"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Field
+                                            label="Date"
+                                            type="date"
+                                            value={f.date}
+                                            onChange={(v) => updateFollowUp(i, "date", v)}
+                                        />
+                                        <Field
+                                            label="Time"
+                                            type="time"
+                                            value={f.time}
+                                            onChange={(v) => updateFollowUp(i, "time", v)}
+                                        />
+                                    </div>
+                                    <Field
+                                        label="Notes"
+                                        value={f.notes}
+                                        onChange={(v) => updateFollowUp(i, "notes", v)}
+                                        placeholder="e.g. bring previous test results"
+                                    />
+                                </div>
+                            ))}
+                        </div>
                     )}
                 </section>
             )}
@@ -216,62 +332,105 @@ export default function CreateVisitCard() {
                     <Field
                         label="Weight (kg)"
                         type="number"
-                        value={vitals.weight || ""}
+                        value={vitals.weight ?? ""}
                         onChange={(v) => handleVitalChange("weight", v)}
-                        onBlur={() => handleVitalBlur("weight", vitals.weight)}
+                        onBlur={() => handleVitalBlur("weight")}
                         error={vitalErrors.weight}
                         min={0}
                     />
                     <Field
                         label="Temperature (°C)"
                         type="number"
-                        value={vitals.temp || ""}
+                        value={vitals.temp ?? ""}
                         onChange={(v) => handleVitalChange("temp", v)}
-                        onBlur={() => handleVitalBlur("temp", vitals.temp)}
+                        onBlur={() => handleVitalBlur("temp")}
                         error={vitalErrors.temp}
                         min={0}
                     />
                     <Field
                         label="Pulse (bpm)"
                         type="number"
-                        value={vitals.pulse || ""}
+                        value={vitals.pulse ?? ""}
                         onChange={(v) => handleVitalChange("pulse", v)}
-                        onBlur={() => handleVitalBlur("pulse", vitals.pulse)}
+                        onBlur={() => handleVitalBlur("pulse")}
                         error={vitalErrors.pulse}
                         min={0}
                     />
                     <Field
                         label="Respiration (breaths/min)"
                         type="number"
-                        value={vitals.respiration || ""}
+                        value={vitals.respiration ?? ""}
                         onChange={(v) => handleVitalChange("respiration", v)}
-                        onBlur={() => handleVitalBlur("respiration", vitals.respiration)}
+                        onBlur={() => handleVitalBlur("respiration")}
                         error={vitalErrors.respiration}
                         min={0}
                     />
                 </div>
-                <Field
-                    label="Appetite"
-                    value={vitals.appetite}
-                    onChange={(v) => handleVitalChange("appetite", v)}
-                    placeholder="e.g. appetite is normal"
-                />
-                <Field
-                    label="Activity"
-                    value={vitals.activity}
-                    onChange={(v) => handleVitalChange("activity", v)}
-                    placeholder="e.g. the pet has a very high fever"
-                />
+
+                {/* Appetite */}
+                <div className="space-y-1.5">
+                    <label className="block text-xs font-medium text-gray-600">Appetite</label>
+                    <div className="flex flex-wrap gap-2">
+                        {APPETITE_OPTIONS.map((opt) => (
+                            <button
+                                key={opt}
+                                type="button"
+                                onClick={() =>
+                                    setVitals((prev) => ({
+                                        ...prev,
+                                        appetite: prev.appetite === opt ? null : opt,
+                                    }))
+                                }
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors capitalize ${
+                                    vitals.appetite === opt
+                                        ? "bg-acc-clr text-pry-clr border-acc-clr"
+                                        : "bg-white text-gray-600 border-gray-200 hover:border-acc-clr"
+                                }`}
+                            >
+                                {opt}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Activity */}
+                <div className="space-y-1.5">
+                    <label className="block text-xs font-medium text-gray-600">Activity</label>
+                    <div className="flex flex-wrap gap-2">
+                        {ACTIVITY_OPTIONS.map((opt) => (
+                            <button
+                                key={opt}
+                                type="button"
+                                onClick={() =>
+                                    setVitals((prev) => ({
+                                        ...prev,
+                                        activity: prev.activity === opt ? null : opt,
+                                    }))
+                                }
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors capitalize ${
+                                    vitals.activity === opt
+                                        ? "bg-acc-clr text-pry-clr border-acc-clr"
+                                        : "bg-white text-gray-600 border-gray-200 hover:border-acc-clr"
+                                }`}
+                            >
+                                {opt}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </section>
 
-            {/* Notes */}
+            {/* Chief Complaint */}
             <section className="space-y-2">
-                <h2 className="text-sm font-semibold text-sec-clr uppercase tracking-wide">Notes</h2>
+                <h2 className="text-sm font-semibold text-sec-clr uppercase tracking-wide">
+                    Chief Complaint
+                    <span className="text-gray-400 normal-case font-normal ml-1">(Subjective)</span>
+                </h2>
                 <textarea
-                    rows={4}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Use the SOAP format: Subjective, Objective, Assessment, Plan."
+                    rows={3}
+                    value={chiefComplaint}
+                    onChange={(e) => setChiefComplaint(e.target.value)}
+                    placeholder="Describe the pet's presenting complaint or reason for visit."
                     className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-acc-clr focus:border-acc-clr transition resize-none"
                 />
             </section>
@@ -324,7 +483,7 @@ interface FieldProps {
     value: string | number;
     onChange: (v: string) => void;
     onBlur?: () => void;
-    type?: "text" | "number";
+    type?: "text" | "number" | "date" | "time";
     placeholder?: string;
     min?: number;
     error?: string;

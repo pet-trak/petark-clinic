@@ -89,8 +89,7 @@ export default function AppointmentDetails() {
                     getVisit(),
                 ]);
                 setAppointment(apptData);
-                
-                // Find the visit for this appointment
+
                 const existingVisit = visitsData.find(v => v.appointmentId === appointmentId);
                 setVisit(existingVisit || null);
             } catch (err) {
@@ -131,8 +130,8 @@ export default function AppointmentDetails() {
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">Unable to Load Appointment</h3>
                     <p className="text-gray-500 mb-6">{error || "Appointment not found"}</p>
-                    <Link 
-                        href="/dashboard/appointments" 
+                    <Link
+                        href="/dashboard/appointments"
                         className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors"
                     >
                         <ArrowLeft size={18} />
@@ -148,9 +147,8 @@ export default function AppointmentDetails() {
     const appointmentDate = formatDate(appointment.date || appointment.appointmentDate || appointment.createdAt);
     const appointmentTime = formatTime(appointment.date || appointment.appointmentTime || appointment.createdAt);
 
-    // Check if visit exists and is in-progress
     const hasActiveVisit = visit && visit.status === "in-progress";
-    // Check if appointment is confirmed
+    const hasCompletedVisit = visit && visit.status === "completed";
     const isConfirmed = appointment.status === "confirmed";
 
     return (
@@ -158,14 +156,14 @@ export default function AppointmentDetails() {
             <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
                 {/* Header */}
                 <div className="mb-6">
-                    <Link 
-                        href="/dashboard/appointments" 
+                    <Link
+                        href="/dashboard/appointments"
                         className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors"
                     >
                         <ArrowLeft size={16} />
                         Back to Appointments
                     </Link>
-                    
+
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
                             <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Appointment Details</h1>
@@ -276,8 +274,8 @@ export default function AppointmentDetails() {
                             </div>
                         </div>
 
-                        {/* Clinical Actions - Show only when appointment is confirmed AND no active visit exists */}
-                        {isConfirmed && !hasActiveVisit && (
+                        {/* Start Clinical — confirmed, no visit yet */}
+                        {isConfirmed && !visit && (
                             <div className="bg-pry-clr rounded-2xl border border-gray-100 shadow-sm p-6">
                                 <button
                                     onClick={() => router.push(`/dashboard/appointments/${appointmentId}/create-visit`)}
@@ -289,15 +287,36 @@ export default function AppointmentDetails() {
                             </div>
                         )}
 
-                        {/* Show visit status if active */}
+                        {/* Visit in progress */}
                         {hasActiveVisit && (
-                            <div className="bg-pry-clr rounded-2xl border border-green-200 shadow-sm p-6 bg-green-50/30">
+                            <div className="bg-green-50/30 rounded-2xl border border-green-200 shadow-sm p-6">
                                 <div className="flex items-center gap-3 text-green-700">
                                     <CheckCircle size={20} />
                                     <span className="font-medium">Visit is currently in progress</span>
                                 </div>
                                 <p className="text-sm text-gray-600 mt-2">
                                     A clinical visit has already been started for this appointment.
+                                </p>
+                                <button
+                                    onClick={() => router.push(`/dashboard/appointments/${appointmentId}/complete-visit`)}
+                                    className="mt-4 w-full bg-acc-clr text-pry-clr py-2.5 px-4 rounded-xl font-medium hover:bg-acc-clr/90 transition-all flex items-center justify-center gap-2"
+                                >
+                                    Complete Visit
+                                    <ArrowRight size={16} />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Visit completed */}
+                        {hasCompletedVisit && (
+                            <div className="bg-blue-50/30 rounded-2xl border border-blue-200 shadow-sm p-6">
+                                <div className="flex items-center gap-3 text-blue-700">
+                                    <CheckCircle size={20} />
+                                    <span className="font-medium">Visit completed</span>
+                                </div>
+                                <p className="text-sm text-gray-600 mt-2">
+                                    This visit was completed on{" "}
+                                    {visit.completedAt ? formatShortDate(visit.completedAt) : "—"}.
                                 </p>
                             </div>
                         )}

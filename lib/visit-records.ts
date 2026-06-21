@@ -17,17 +17,39 @@ export interface VisitRecordPet {
 export interface VisitRecordVet {
     _id: string;
     name?: string;
-    fullname?: string;
     email?: string;
+    specialization?: string;
 }
 
 export interface VisitRecordVitals {
-    weight: number;
-    temp: number;
-    pulse: number;
-    respiration: number;
-    appetite: string;
-    activity: string;
+    weight: number | null;
+    temp: number | null;
+    pulse: number | null;
+    respiration: number | null;
+    appetite: "normal" | "reduced" | "increased" | "absent" | null;
+    activity: "active" | "lethargic" | "hyperactive" | "normal" | null;
+}
+
+export interface VisitRecordSOAP {
+    subjective: string;  // chief complaint — set at createVisit
+    objective: string;   // clinical findings — set at completeVisit
+    assessment: string;  // diagnosis — set at completeVisit
+    plan: string;        // treatment/follow-up — set at completeVisit
+}
+
+export interface VisitRecordFollowUp {
+    serviceId: string | null;
+    serviceName: string;
+    date: string | null;
+    time: string | null;
+    notes: string;
+    createdAt: string;
+}
+
+export interface VisitRecordService {
+    _id: string;
+    name: string;
+    price?: number;
 }
 
 export interface VisitRecordBilling {
@@ -45,11 +67,15 @@ export interface VisitRecord {
     vetId: string | null;
     status: "in-progress" | "completed";
     vitals: VisitRecordVitals;
-    notes?: string;
+    soap: VisitRecordSOAP;
+    followUps: VisitRecordFollowUp[];
+    servicesProvided: string[];
+    selectedServices: VisitRecordService[];
     billing: VisitRecordBilling;
     paymentStatus: "unpaid" | "paid" | "failed" | "refunded";
     createdAt: string;
     completedAt: string | null;
+    paidAt: string | null;
     pet?: VisitRecordPet;
     vet?: VisitRecordVet;
 }
@@ -96,8 +122,7 @@ export async function getVisitRecords(params: GetVisitRecordsParams = {}): Promi
 }
 
 export function getAdministeredBy(visit: VisitRecord): string {
-    if (visit.vet?.fullname) return visit.vet.fullname;
-    if (visit.vet?.name)     return `Dr. ${visit.vet.name}`;
-    if (visit.vetId)         return "vet";
+    if (visit.vet?.name) return `Dr. ${visit.vet.name}`;
+    if (visit.vetId)     return "Vet";
     return "Clinic Staff";
 }

@@ -123,7 +123,23 @@ export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>)
 
     const handleTimeline = () => {
         if (!visit) return;
-        router.push(`/dashboard/records/pet/${visit.petId}/timeline?userId=${visit.userId}`);
+        
+        const petId = visit.petId;
+        const userId = visit.userId;
+        
+        if (!petId) {
+            console.error('petId is missing from visit:', visit);
+            alert('Pet ID is missing. Cannot view timeline.');
+            return;
+        }
+        
+        if (!userId) {
+            console.error('userId is missing from visit:', visit);
+            alert('User ID is missing. Cannot view timeline.');
+            return;
+        }
+        
+        router.push(`/dashboard/records/pet/${petId}/timeline?userId=${userId}`);
     };
 
     const getServiceDetails = (serviceId: string): ClinicService | undefined => {
@@ -499,17 +515,38 @@ export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>)
                 </div>
             )}
 
-            {/* Clinical Notes */}
-            {visit.notes && (
+            {/* SOAP Notes */}
+            {visit.soap && (visit.soap.subjective || visit.soap.objective || visit.soap.assessment || visit.soap.plan) && (
                 <div className="bg-pry-clr rounded-xl border border-gray-100 p-6 shadow-sm">
                     <div className="flex items-center gap-2 mb-4">
                         <FileText className="w-5 h-5 text-gray-400" />
-                        <h3 className="font-semibold text-sec-clr">Clinical Notes</h3>
+                        <h3 className="font-semibold text-sec-clr">Clinical Notes (SOAP)</h3>
                     </div>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
-                            {visit.notes}
-                        </p>
+                    <div className="space-y-4">
+                        {visit.soap.subjective && (
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">S — Subjective</p>
+                                <p className="text-sm text-gray-700 leading-relaxed">{visit.soap.subjective}</p>
+                            </div>
+                        )}
+                        {visit.soap.objective && (
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">O — Objective</p>
+                                <p className="text-sm text-gray-700 leading-relaxed">{visit.soap.objective}</p>
+                            </div>
+                        )}
+                        {visit.soap.assessment && (
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">A — Assessment</p>
+                                <p className="text-sm text-gray-700 leading-relaxed">{visit.soap.assessment}</p>
+                            </div>
+                        )}
+                        {visit.soap.plan && (
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">P — Plan</p>
+                                <p className="text-sm text-gray-700 leading-relaxed">{visit.soap.plan}</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
