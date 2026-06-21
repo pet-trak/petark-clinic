@@ -11,19 +11,14 @@ import { type Appointment, updateAppointmentStatus } from "@/lib/appointment";
 interface VisitBtnProps {
     appointmentId: string;
     status: Appointment["status"];
-    hasActiveVisit?: boolean;
+    visitStatus?: "in-progress" | "completed";
     onConfirmed?: () => void;
 }
-
-const VISIT_ACTION_LABELS: Partial<Record<Appointment["status"], { label: string; className: string }>> = {
-    completed: { label: "Visit closed",   className: "text-blue-500"  },
-    cancelled: { label: "Cancelled",      className: "text-red-400"   },
-};
 
 export default function VisitBtn({
     appointmentId,
     status,
-    hasActiveVisit = false,
+    visitStatus,
     onConfirmed,
 }: Readonly<VisitBtnProps>) {
     const [loading, setLoading] = useState(false);
@@ -56,20 +51,30 @@ export default function VisitBtn({
         );
     }
 
-    // completed / cancelled → static label
+    // completed / cancelled / missed → static label
     if (status !== "confirmed") {
-        const fallback = VISIT_ACTION_LABELS[status];
+        const labels: Partial<Record<Appointment["status"], { label: string; className: string }>> = {
+            completed: { label: "Visit closed", className: "text-blue-500"  },
+            cancelled: { label: "Cancelled",    className: "text-red-400"   },
+            missed:    { label: "Missed",        className: "text-gray-400"  },
+        };
+        const fallback = labels[status];
         return fallback
             ? <span className={`text-xs italic ${fallback.className}`}>{fallback.label}</span>
             : null;
     }
 
-    // confirmed but visit already exists → show in-progress label
-    if (hasActiveVisit) {
+    // confirmed + visit in progress
+    if (visitStatus === "in-progress") {
         return <span className="text-xs italic text-orange-500">Visit in progress</span>;
     }
 
-    // confirmed + no active visit → "Create Visit"
+    // confirmed + visit completed
+    if (visitStatus === "completed") {
+        return <span className="text-xs italic text-blue-500">Visit closed</span>;
+    }
+
+    // confirmed + no visit yet → "Create Visit"
     return (
         <button
             onClick={handleCreateVisit}

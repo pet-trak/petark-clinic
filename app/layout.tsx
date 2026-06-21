@@ -3,7 +3,7 @@ import { Toaster } from "sonner"; // import Toaster
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PetArk",
+  title: "PetArk Clinic",
   description: "PetArk",
 }
 

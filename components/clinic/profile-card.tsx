@@ -138,10 +138,10 @@ export default function ProfileCard() {
                                 <p className="text-sm text-gray-500 mb-2">Services Provided</p>
                                 <div className="flex flex-wrap gap-2">
                                     {profile.servicesProvided.map((service) => (
-                                        <span key={service} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md capitalize">
-                                            {service}
-                                        </span>
-                                    ))}
+    <span key={service._id} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md capitalize">
+        {service.name} - ₦{service.price.toFixed(2)}
+    </span>
+))}
                                 </div>
                             </div>
                             <div>

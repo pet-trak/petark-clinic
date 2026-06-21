@@ -59,9 +59,7 @@ export default function GetAppointments() {
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(1);
     const [range, setRange] = useState<DateRange>("all");
-
-    // set of appointmentIds that already have an in-progress visit
-    const [activeVisitIds, setActiveVisitIds] = useState<Set<string>>(new Set());
+    const [visitStatusMap, setVisitStatusMap] = useState<Map<string, "in-progress" | "completed">>(new Map());
 
     const { setAppointments: setCtxAppointments } = useAppointmentsContext();
 
@@ -81,13 +79,13 @@ export default function GetAppointments() {
                     setData(result);
                     setCtxAppointments(result.appointments);
 
-                    // build a set of appointmentIds with an active (in-progress) visit
-                    const ids = new Set(
-                        visits
-                            .filter((v) => v.status === "in-progress")
-                            .map((v) => v.appointmentId)
-                    );
-                    setActiveVisitIds(ids);
+                    const map = new Map<string, "in-progress" | "completed">();
+                    visits.forEach((v) => {
+                        if (v.status === "in-progress" || v.status === "completed") {
+                            map.set(v.appointmentId, v.status);
+                        }
+                    });
+                    setVisitStatusMap(map);
                 }
             } catch {
                 if (!cancelled) setError("Failed to load appointments. Please try again.");
@@ -244,7 +242,7 @@ export default function GetAppointments() {
                                             <VisitBtn
                                                 appointmentId={appt._id}
                                                 status={appt.status}
-                                                hasActiveVisit={activeVisitIds.has(appt._id)}
+                                                visitStatus={visitStatusMap.get(appt._id)}
                                                 onConfirmed={() => setData((prev) => ({
                                                     ...prev,
                                                     appointments: prev.appointments.map((a) =>
