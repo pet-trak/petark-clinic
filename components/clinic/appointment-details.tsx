@@ -390,12 +390,12 @@ export default function AppointmentDetails() {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="space-y-3">
+                        {/* <div className="space-y-3">
                             <button className="w-full bg-red-50 border border-red-200 text-red-600 py-2.5 px-4 rounded-xl font-medium hover:bg-red-100 transition-colors flex items-center justify-center gap-2">
                                 <AlertCircle size={16} />
                                 Reassess / Reschedule
                             </button>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>
