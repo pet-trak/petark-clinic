@@ -27,6 +27,15 @@ export interface ClinicService {
     price: number;
 }
 
+export interface Subscription {
+    plan: 'free' | 'pro';
+    status: 'active' | 'inactive' | 'cancelled';
+    startedAt: string | null;
+    expiresAt: string | null;
+    paystackSubscriptionCode: string | null;
+    paystackNextPaymentDate: string | null;
+}
+
 export interface User {
     id: string;
     clinicName: string;
@@ -41,6 +50,7 @@ export interface User {
     closingTime: string;
     daysOpen: string[];
     vets: Vet[];
+    subscription: Subscription;
 }
 
 export async function getUser(): Promise<User> {

@@ -41,13 +41,25 @@ function useLogout() {
   };
 }
 
-// Helper function to check if a route is active
 function isRouteActive(pathname: string, href: string, exact: boolean = false) {
-  if (exact) {
-    return pathname === href;
-  }
-  // For nested routes, check if pathname starts with href
+  if (exact) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+// ─── Plan Badge ───────────────────────────────────────────────────────────────
+function PlanBadge({ plan }: { plan?: string }) {
+  if (plan === 'pro') {
+    return (
+      <span className="text-[9px] font-semibold bg-violet-600 text-white px-1.5 py-0.5 rounded-full shrink-0">
+        ✦ Pro
+      </span>
+    );
+  }
+  return (
+    <span className="text-[9px] font-semibold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full shrink-0">
+      Free
+    </span>
+  );
 }
 
 // ─── Mobile Top Bar ───────────────────────────────────────────────────────────
@@ -99,9 +111,12 @@ export function MobileTopBar() {
                 style={{ zIndex: 10 }}
               >
                 <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-semibold text-gray-900 truncate pry-ff">
-                    {profile?.clinicName || "Pet Owner"}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-gray-900 truncate pry-ff">
+                      {profile?.clinicName || "Pet Owner"}
+                    </p>
+                    <PlanBadge plan={profile?.subscription?.plan} />
+                  </div>
                   <p className="text-xs text-gray-500 truncate mt-0.5">
                     {profile?.email || "petark@example.com"}
                   </p>
@@ -287,9 +302,12 @@ export function Sidebar() {
                 {profile?.clinicName?.charAt(0) || "P"}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-700 truncate">
-                  {profile?.clinicName || "Clinic"}
-                </p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium text-gray-700 truncate">
+                    {profile?.clinicName || "Clinic"}
+                  </p>
+                  <PlanBadge plan={profile?.subscription?.plan} />
+                </div>
                 <p className="text-xs text-gray-500 truncate">
                   {profile?.email || "petark@example.com"}
                 </p>

@@ -13,21 +13,6 @@ interface Vitals {
     activity: "active" | "lethargic" | "hyperactive" | "normal" | null;
 }
 
-interface SOAP {
-    subjective: string;  // chief complaint — set at createVisit
-    objective: string;   // clinical findings — set at completeVisit
-    assessment: string;  // diagnosis — set at completeVisit
-    plan: string;        // treatment/follow-up — set at completeVisit
-}
-
-export interface CompleteVisitPayload {
-    soap: {
-        subjective?: string; // optional — falls back to createVisit value
-        objective: string;
-        assessment: string;
-        plan: string;
-    }
-};
 
 interface Billing {
     professionalFee: number;
@@ -74,6 +59,10 @@ export interface CompleteVisitPayload {
         assessment: string;
         plan: string;
     };
+}
+
+export interface CompleteVisitAIPayload {
+    roughNotes: string;
 }
 
 interface ApiVisitResponse {
@@ -135,6 +124,33 @@ interface UpdateVisitVitalsResponse {
     status: string;
     data: {
         visit: ApiVisitResponse;
+    };
+}
+
+export interface VitalsTrendPoint {
+    date: string;
+    label: string;
+    temp: number | null;
+    pulse: number | null;
+    respiration: number | null;
+    appetite: string | null;
+    activity: string | null;
+    diagnosis: string | null;
+}
+
+export interface WeightTrendPoint {
+    date: string;
+    label: string;
+    weight: number | null;
+    diagnosis: string | null;
+}
+
+export interface PetTrendsResponse {
+    status: string;
+    results: number;
+    data: {
+        vitalsTrend: VitalsTrendPoint[];
+        weightTrend: WeightTrendPoint[];
     };
 }
 
@@ -215,5 +231,39 @@ export async function completeVisit(
             throw new Error(error.response?.data?.message || "Failed to complete visit");
         }
         throw new Error("An unexpected error occurred while completing visit");
+    }
+}
+
+export async function completeVisitWithAI(
+    visitId: string,
+    payload: CompleteVisitAIPayload
+): Promise<ApiVisitResponse> {
+    try {
+        const response = await api.patch<{ status: string; data: ApiVisitResponse }>(
+            `/visit/complete/${visitId}/ai`,
+            payload
+        );
+        return response.data.data;
+    } catch (error) {
+        if (axiosError.isAxiosError(error)) {
+            const meta = error.response?.data?.meta;
+            if (meta?.code === 'PLAN_UPGRADE_REQUIRED') {
+                throw { isUpgradeRequired: true, ...meta };
+            }
+            throw new Error(error.response?.data?.message || "Failed to complete visit with AI");
+        }
+        throw new Error("An unexpected error occurred");
+    }
+}
+
+export async function getPetTrends(petId: string): Promise<PetTrendsResponse['data']> {
+    try {
+        const response = await api.get<PetTrendsResponse>(`/visit/pro/trends/${petId}`);
+        return response.data.data;
+    } catch (error) {
+        if (axiosError.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || "Failed to fetch pet trends");
+        }
+        throw new Error("An unexpected error occurred while fetching trends");
     }
 }

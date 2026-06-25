@@ -141,7 +141,7 @@ export default function GetVisits() {
             </div>
 
             <div className="space-y-3">
-                {visits.map((visit) => {
+                {visits.slice(0, 4).map((visit) => {
                     const pet = visit.pet;
 
                     return (

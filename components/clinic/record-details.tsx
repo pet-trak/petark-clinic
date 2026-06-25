@@ -6,6 +6,8 @@ import type { Visit } from "@/lib/visit";
 import { getUser, type ClinicService } from "@/lib/user";
 import UpdateVitals from "@/components/clinic/update-vitals";
 import CompleteVisitBtn from "@/components/clinic/complete-visit-btn";
+import PetTrendsChart from "@/components/clinic/pet-trends-chart";
+import TreatmentTimeline from "@/components/clinic/treatment-timeline";
 import {
     AlertCircle,
     Stethoscope,
@@ -549,6 +551,15 @@ export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>)
                         )}
                     </div>
                 </div>
+            )}
+
+            {/* TPR & Weight Trends — Pro */}
+            {visit.petId && (
+                <PetTrendsChart petId={visit.petId} />
+            )}
+
+            {visit.petId && (
+                <TreatmentTimeline petId={visit.petId} visitId={visit._id} />
             )}
 
             <button

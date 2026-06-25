@@ -55,9 +55,20 @@ export default function ProfileCard() {
                             {profile.clinicName.charAt(0)}
                         </div>
                         <div className="pry-ff">
-                            <h2 className="text-xl font-bold text-sec-clr">{profile.clinicName}</h2>
-                            <p className="text-gray-500">{profile.email}</p>
-                        </div>
+            <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold text-sec-clr">{profile.clinicName}</h2>
+                {profile.subscription?.plan === 'pro' ? (
+                    <span className="flex items-center gap-1 text-[10px] font-semibold bg-violet-600 text-white px-2 py-0.5 rounded-full">
+                        ✦ Pro
+                    </span>
+                ) : (
+                    <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                        Free
+                    </span>
+                )}
+            </div>
+            <p className="text-gray-500">{profile.email}</p>
+        </div>
                     </div>
                 </div>
 
