@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { getAppointmentById, type Appointment } from "@/lib/appointment";
 import { getVisit, type Visit } from "@/lib/visit";
+import CompleteVisitBtn from "@/components/clinic/complete-visit-btn";
 import Link from "next/link";
 
 const STATUS_STYLES: Record<Appointment["status"], string> = {
@@ -288,22 +289,19 @@ export default function AppointmentDetails() {
                         )}
 
                         {/* Visit in progress */}
-                        {hasActiveVisit && (
+                        {hasActiveVisit && visit && (
                             <div className="bg-green-50/30 rounded-2xl border border-green-200 shadow-sm p-6">
-                                <div className="flex items-center gap-3 text-green-700">
+                                <div className="flex items-center gap-3 text-green-700 mb-2">
                                     <CheckCircle size={20} />
                                     <span className="font-medium">Visit is currently in progress</span>
                                 </div>
-                                <p className="text-sm text-gray-600 mt-2">
+                                <p className="text-sm text-gray-600 mb-4">
                                     A clinical visit has already been started for this appointment.
                                 </p>
-                                <button
-                                    onClick={() => router.push(`/dashboard/appointments/${appointmentId}/complete-visit`)}
-                                    className="mt-4 w-full bg-acc-clr text-pry-clr py-2.5 px-4 rounded-xl font-medium hover:bg-acc-clr/90 transition-all flex items-center justify-center gap-2"
-                                >
-                                    Complete Visit
-                                    <ArrowRight size={16} />
-                                </button>
+                                <CompleteVisitBtn
+                                    visit={visit}
+                                    onComplete={(updated) => setVisit(updated)}
+                                />
                             </div>
                         )}
 
