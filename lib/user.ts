@@ -84,3 +84,40 @@ export function calculateTotalFromServices(services: ClinicService[], serviceIds
         .filter((service): service is ClinicService => service !== undefined)
         .reduce((total, service) => total + service.price, 0);
 }
+
+// update vet profile
+export interface PricingEntry {
+    type: string;
+    fee: number;
+}
+
+export interface UpdateServicesPayload {
+    address?: Partial<Address>;
+    phone?: string;
+    servicesProvided?: string[];
+    animalsHandled?: string[];
+    startingTime?: string;
+    closingTime?: string;
+    daysOpen?: string[];
+    pricing?: PricingEntry[];
+}
+
+// Changed the return type from Promise<User> to Promise<Partial<User>>
+export async function updateServices(payload: UpdateServicesPayload): Promise<Partial<User>> {
+    try {
+        const response = await api.patch("/clinic/services", payload);
+        
+        // We merge the payload sent with the exact response data from the backend
+        return {
+            ...payload, 
+            ...response.data.data
+        } as Partial<User>;
+    } catch (error) {
+        if (error instanceof AxiosError) {
+            console.error("Error updating clinic services:", error.response?.data || error.message);
+        } else {
+            console.error("Error updating clinic services:", error);
+        }
+        throw error;
+    }
+}

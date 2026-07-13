@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { getUser, User } from "@/lib/user";
 import { Loader2, MapPin, Phone, Mail, Building2, Clock, PawPrint } from "lucide-react";
+import UpdateServices from "@/components/clinic/update-services";
 
 export default function ProfileCard() {
     const [profile, setProfile] = useState<User | null>(null);
@@ -49,28 +50,43 @@ export default function ProfileCard() {
             
             {/* Clinic Info Card */}
             <div className="bg-pry-clr rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-6 border-b border-gray-100">
-                    <div className="flex items-center gap-4">
-                        <div className="h-16 w-16 rounded-full bg-acc-clr flex items-center justify-center text-pry-clr font-bold text-xl pry-ff">
-                            {profile.clinicName.charAt(0)}
-                        </div>
-                        <div className="pry-ff">
-            <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-sec-clr">{profile.clinicName}</h2>
-                {profile.subscription?.plan === 'pro' ? (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold bg-violet-600 text-white px-2 py-0.5 rounded-full">
-                        ✦ Pro
-                    </span>
-                ) : (
-                    <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                        Free
-                    </span>
-                )}
+<div className="p-6 border-b border-gray-100">
+    <div className="flex items-start justify-between">
+        <div className="flex items-center gap-4">
+            <div className="h-16 w-16 rounded-full bg-acc-clr flex items-center justify-center text-pry-clr font-bold text-xl pry-ff">
+                {profile.clinicName.charAt(0)}
             </div>
-            <p className="text-gray-500">{profile.email}</p>
-        </div>
-                    </div>
+            <div className="pry-ff">
+                <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-sec-clr">{profile.clinicName}</h2>
+                    {profile.subscription?.plan === 'pro' ? (
+                        <span className="flex items-center gap-1 text-[10px] font-semibold bg-violet-600 text-white px-2 py-0.5 rounded-full">
+                            ✦ Pro
+                        </span>
+                    ) : (
+                        <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                            Free
+                        </span>
+                    )}
                 </div>
+                <p className="text-gray-500">{profile.email}</p>
+            </div>
+        </div>
+
+        <UpdateServices 
+  profile={profile} 
+  onSuccess={(updatedFields) => {
+    setProfile((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        ...updatedFields
+      } as User; // Force TypeScript to recognize the fully merged object as a complete User
+    });
+  }} 
+/>
+    </div>
+</div>
 
                 <div className="p-6 space-y-4 pry-ff">
                     {/* Contact Information */}
@@ -87,7 +103,7 @@ export default function ProfileCard() {
                             <Phone className="w-5 h-5 text-acc-clr" />
                             <div>
                                 <p className="text-sm text-gray-500 pry-ff">Phone</p>
-                                <p className="font-medium text-sec-clr">{profile.phoneNumber}</p>
+                                <p className="font-medium text-sec-clr">{profile.phoneNumber || "-"}</p>
                             </div>
                         </div>
 
@@ -119,22 +135,27 @@ export default function ProfileCard() {
                         <div className="grid gap-2 md:grid-cols-2">
                             <div>
                                 <p className="text-sm text-gray-500">Opening Time</p>
-                                <p className="font-medium text-sec-clr">{profile.startingTime}</p>
+                                <p className="font-medium text-sec-clr">{profile.startingTime || "-"}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Closing Time</p>
-                                <p className="font-medium text-sec-clr">{profile.closingTime}</p>
+                                <p className="font-medium text-sec-clr">{profile.closingTime || "-"}</p>
                             </div>
-                            <div className="md:col-span-2">
-                                <p className="text-sm text-gray-500">Days Open</p>
-                                <div className="flex flex-wrap gap-2 mt-1">
-                                    {profile.daysOpen.map((day) => (
-                                        <span key={day} className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-md">
-                                            {day}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
+                            {/* Days Open */}
+<div className="md:col-span-2">
+    <p className="text-sm text-gray-500">Days Open</p>
+    <div className="flex flex-wrap gap-2 mt-1">
+        {profile.daysOpen && profile.daysOpen.length > 0 ? (
+            profile.daysOpen.map((day) => (
+                <span key={day} className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-md">
+                    {day}
+                </span>
+            ))
+        ) : (
+            <span className="text-sm text-gray-400">-</span>
+        )}
+    </div>
+</div>
                         </div>
                     </div>
 
@@ -145,16 +166,21 @@ export default function ProfileCard() {
                             Services & Animals
                         </h3>
                         <div className="space-y-4">
-                            <div>
-                                <p className="text-sm text-gray-500 mb-2">Services Provided</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {profile.servicesProvided.map((service) => (
-    <span key={service._id} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md capitalize">
-        {service.name} - ₦{service.price.toFixed(2)}
-    </span>
-))}
-                                </div>
-                            </div>
+                            {/* Animals Handled */}
+<div>
+    <p className="text-sm text-gray-500 mb-2">Animals Handled</p>
+    <div className="flex flex-wrap gap-2">
+        {profile.animalsHandled && profile.animalsHandled.length > 0 ? (
+            profile.animalsHandled.map((animal) => (
+                <span key={animal} className="px-2 py-1 bg-purple-50 text-purple-700 text-xs rounded-md capitalize">
+                    {animal}
+                </span>
+            ))
+        ) : (
+            <span className="text-sm text-gray-400">-</span>
+        )}
+    </div>
+</div>
                             <div>
                                 <p className="text-sm text-gray-500 mb-2">Animals Handled</p>
                                 <div className="flex flex-wrap gap-2">
