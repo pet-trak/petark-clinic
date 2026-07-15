@@ -181,7 +181,7 @@ export default function ProfileCard() {
         )}
     </div>
 </div>
-                            <div>
+                            {/* <div>
                                 <p className="text-sm text-gray-500 mb-2">Animals Handled</p>
                                 <div className="flex flex-wrap gap-2">
                                     {profile.animalsHandled.map((animal) => (
@@ -190,7 +190,7 @@ export default function ProfileCard() {
                                         </span>
                                     ))}
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 </div>
