@@ -19,8 +19,8 @@ interface RegisterData {
     phoneNumber: string;
     licenseNumber: string;
     licenseDocument: File;
-    registrationCertificate: File;
-    additionalDocuments?: File[];
+    ownerIDCard: File;
+    ownerPassport?: File | null;
 }
 
 interface LoginData {
@@ -41,48 +41,53 @@ interface ApiErrorResponse {
 
 export async function registerClinic(data: RegisterData) {
     try {
-        const response = await api.post("/auth/clinic/register", data, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            }
+        const formData = new FormData();
+
+        formData.append("clinicName", data.clinicName);
+        formData.append("email", data.email);
+        formData.append("password", data.password);
+        formData.append("phoneNumber", data.phoneNumber);
+        formData.append("licenseNumber", data.licenseNumber);
+
+        Object.entries(data.address).forEach(([key, value]) => {
+            if (value) formData.append(`address[${key}]`, value);
         });
+
+        formData.append("licenseDocument", data.licenseDocument);
+        formData.append("ownerIDCard", data.ownerIDCard);
+
+        if (data.ownerPassport) {
+            formData.append("ownerPassport", data.ownerPassport);
+        }
+
+        // Don't set Content-Type manually — axios/the browser needs to
+        // generate the multipart boundary itself.
+        const response = await api.post("/auth/clinic/register", formData);
         return response.data;
     }
     catch (error) {
         if (error instanceof AxiosError) {
             const axiosError = error as AxiosError<ApiErrorResponse>;
-            
             if (axiosError.response) {
                 console.error("Server error:", axiosError.response.status);
                 console.error("Error data:", axiosError.response.data);
-                
                 throw {
                     status: axiosError.response.status,
                     message: axiosError.response.data?.message || axiosError.response.data?.error || "Registration failed",
                     errors: axiosError.response.data?.errors,
                 };
-            } 
+            }
             else if (axiosError.request) {
                 console.error("No response from server:", axiosError.request);
-                throw {
-                    status: 0,
-                    message: "Unable to connect to server. Please check your internet connection.",
-                };
+                throw { status: 0, message: "Unable to connect to server. Please check your internet connection." };
             }
             else {
                 console.error("Error setting up request:", axiosError.message);
-                throw {
-                    status: 0,
-                    message: axiosError.message || "An unexpected error occurred",
-                };
+                throw { status: 0, message: axiosError.message || "An unexpected error occurred" };
             }
         }
-        
         console.error("Non-Axios error:", error);
-        throw {
-            status: 500,
-            message: error instanceof Error ? error.message : "An unexpected error occurred",
-        };
+        throw { status: 500, message: error instanceof Error ? error.message : "An unexpected error occurred" };
     }
 }
 

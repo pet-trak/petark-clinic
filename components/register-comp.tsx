@@ -60,7 +60,8 @@ export default function RegisterComp() {
     // Step 3: License & Documents
     const [licenseNumber, setLicenseNumber] = useState("");
     const [licenseDocument, setLicenseDocument] = useState<File | null>(null);
-    const [registrationCertificate, setRegistrationCertificate] = useState<File | null>(null);
+    const [ownerIDCard, setOwnerIDCard] = useState<File | null>(null);
+    const [ownerPassport, setOwnerPassport] = useState<File | null>(null);
     const [additionalDocuments, setAdditionalDocuments] = useState<File[]>([]);
     
     const [error, setError] = useState<string>("");
@@ -112,10 +113,6 @@ export default function RegisterComp() {
                 setError("State is required");
                 return;
             }
-            if (!address.zipCode.trim()) {
-                setError("ZIP code is required");
-                return;
-            }
             if (!address.country.trim()) {
                 setError("Country is required");
                 return;
@@ -132,8 +129,8 @@ export default function RegisterComp() {
                 setError("License document is required");
                 return;
             }
-            if (!registrationCertificate) {
-                setError("Registration certificate is required");
+            if (!ownerIDCard) {
+                setError("Owner ID card is required");
                 return;
             }
         }
@@ -170,12 +167,12 @@ export default function RegisterComp() {
                 phoneNumber,
                 licenseNumber,
                 licenseDocument: licenseDocument!,
-                registrationCertificate: registrationCertificate!,
-                additionalDocuments: additionalDocuments.length > 0 ? additionalDocuments : undefined,
+                ownerIDCard: ownerIDCard!,
+                ownerPassport: ownerPassport ?? undefined,
             };
             
             await registerClinic(formData);
-            router.push("/dashboard");
+            router.push("/login");
         } catch (error) {
             console.error("Registration error:", error);
             
@@ -197,29 +194,27 @@ export default function RegisterComp() {
         }
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'license' | 'certificate' | 'additional') => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        
-        // Validate file type
-        const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-        if (!validTypes.includes(file.type)) {
-            setError("Please upload a PDF, JPEG, or PNG file");
-            return;
-        }
-        
-        // Validate file size (max 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            setError("File size must be less than 10MB");
-            return;
-        }
-        
-        if (type === 'license') {
-            setLicenseDocument(file);
-        } else if (type === 'certificate') {
-            setRegistrationCertificate(file);
-        }
-    };
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'license' | 'certificate') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+        setError("Please upload a PDF, JPEG, or PNG file");
+        return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+        setError("File size must be less than 10MB");
+        return;
+    }
+
+    if (type === 'license') {
+        setLicenseDocument(file);
+    } else if (type === 'certificate') {
+        setOwnerIDCard(file);
+    }
+};
 
     const handleAdditionalDocuments = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -405,7 +400,6 @@ export default function RegisterComp() {
                                         type="text"
                                         value={address.zipCode}
                                         onChange={(e) => setAddress({...address, zipCode: e.target.value})}
-                                        required
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-acc-clr focus:border-transparent transition-all duration-200"
                                         placeholder="10001"
                                     />
@@ -478,7 +472,7 @@ export default function RegisterComp() {
                             <div>
                                 <label className="block text-sm font-medium text-sec-clr mb-1">
                                     <FileCheck className="inline h-4 w-4 mr-1" />
-                                    Registration Certificate
+                                    Owner ID Card
                                 </label>
                                 <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-acc-clr transition-colors duration-200">
                                     <div className="space-y-1 text-center">
@@ -499,17 +493,17 @@ export default function RegisterComp() {
                                         <p className="text-xs text-gray-500">PDF, PNG, JPG up to 10MB</p>
                                     </div>
                                 </div>
-                                {registrationCertificate && (
+                                {ownerIDCard && (
                                     <div className="mt-2 text-sm text-green-600 flex items-center gap-2">
                                         <Check className="h-4 w-4" />
-                                        {registrationCertificate.name}
+                                        {ownerIDCard.name}
                                     </div>
                                 )}
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-sec-clr mb-1">
-                                    Additional Documents (Optional)
+                                    Owner Passport Photograph (Optional)
                                 </label>
                                 <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-acc-clr transition-colors duration-200">
                                     <div className="space-y-1 text-center">
