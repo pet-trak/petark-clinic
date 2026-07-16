@@ -22,7 +22,7 @@ import { logoutClinic } from "@/lib/auth";
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true },
   { name: "Appointments", href: "/dashboard/appointments", icon: Calendar, exact: false },
-  { name: "Records", href: "/dashboard/records", icon: FileText, exact: false },
+  { name: "Clinical", href: "/dashboard/clinical", icon: FileText, exact: false },
   { name: "Profile", href: "/dashboard/profile", icon: User, exact: false },
 ];
 
