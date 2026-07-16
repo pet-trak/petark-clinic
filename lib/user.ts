@@ -51,6 +51,10 @@ export interface User {
     daysOpen: string[];
     vets: Vet[];
     subscription: Subscription;
+    registration?: {
+        enabled: boolean;
+        fee: number;
+    };
 }
 
 export async function getUser(): Promise<User> {
@@ -91,6 +95,11 @@ export interface PricingEntry {
     fee: number;
 }
 
+export interface RegistrationSettings {
+    enabled: boolean;
+    fee: number;
+}
+
 export interface UpdateServicesPayload {
     address?: Partial<Address>;
     phone?: string;
@@ -100,6 +109,7 @@ export interface UpdateServicesPayload {
     closingTime?: string;
     daysOpen?: string[];
     pricing?: PricingEntry[];
+    registration?: RegistrationSettings;
 }
 
 // Changed the return type from Promise<User> to Promise<Partial<User>>

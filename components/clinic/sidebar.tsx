@@ -254,21 +254,6 @@ export function Sidebar() {
 
       {/* Bottom actions */}
       <div className="p-3 border-t border-gray-100 space-y-1 shrink-0">
-        <Link
-          href="/dashboard/profile/settings"
-          title={isCollapsed ? "Settings" : undefined}
-          className={`flex items-center px-3 py-2.5 rounded-xl transition-all duration-150 active:scale-[0.96] ${
-            isCollapsed ? "justify-center" : "gap-3"
-          } ${
-            isRouteActive(pathname, "/dashboard/profile/settings", false)
-              ? "bg-acc-clr text-white"
-              : "hover:bg-gray-100 text-gray-700"
-          }`}
-        >
-          <Settings className="w-5 h-5 shrink-0" />
-          {!isCollapsed && <span className="text-sm font-medium">Settings</span>}
-        </Link>
-
         <button
           onClick={handleLogout}
           className={`flex items-center w-full px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 transition-all duration-150 active:scale-[0.96] ${

@@ -193,6 +193,21 @@ export default function ProfileCard() {
                             </div> */}
                         </div>
                     </div>
+
+                    {/* Registration Fee */}
+<div className="pt-4 border-t border-gray-100">
+    <h3 className="font-semibold text-sec-clr mb-3 flex items-center gap-2">
+        <Building2 className="w-5 h-5 text-acc-clr" />
+        New Patient Registration
+    </h3>
+    {profile.registration?.enabled ? (
+        <p className="font-medium text-sec-clr">
+           <b>Registration fee: </b> ₦{profile.registration.fee.toLocaleString()} 
+        </p>
+    ) : (
+        <p className="text-sm text-gray-400">No registration fee charged</p>
+    )}
+</div>
                 </div>
             </div>
         </div>

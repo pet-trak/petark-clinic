@@ -58,6 +58,14 @@ export default function UpdateServices({ profile, onSuccess }: Readonly<UpdateSe
     const [newServiceName, setNewServiceName] = useState("");
     const [newServiceFee, setNewServiceFee] = useState("");
 
+    // Registration fee — separate from services
+    const [registrationEnabled, setRegistrationEnabled] = useState(
+        profile.registration?.enabled ?? false
+    );
+    const [registrationFee, setRegistrationFee] = useState(
+        profile.registration?.fee !== undefined ? String(profile.registration.fee) : ""
+    );
+
     const toggleDay = (day: string) => {
         setDaysOpen((prev) =>
             prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
@@ -96,45 +104,54 @@ export default function UpdateServices({ profile, onSuccess }: Readonly<UpdateSe
         setServices(services.filter((s) => s.name !== name));
     };
 
-    const buildPayload = (): UpdateServicesPayload => {
-        const payload: UpdateServicesPayload = {};
+const buildPayload = (): UpdateServicesPayload => {
+    const payload: UpdateServicesPayload = {};
 
-        if (street || city || state || country || zipCode) {
-            payload.address = { street, city, state, country, zipCode };
-        }
+    if (street || city || state || country || zipCode) {
+        payload.address = { street, city, state, country, zipCode };
+    }
 
-        if (phone) payload.phone = phone;
-        if (startingTime) payload.startingTime = startingTime;
-        if (closingTime) payload.closingTime = closingTime;
-        if (daysOpen.length > 0) payload.daysOpen = daysOpen;
-        if (animalsHandled.length > 0) payload.animalsHandled = animalsHandled;
+    if (phone) payload.phone = phone;
+    if (startingTime) payload.startingTime = startingTime;
+    if (closingTime) payload.closingTime = closingTime;
+    if (daysOpen.length > 0) payload.daysOpen = daysOpen;
+    if (animalsHandled.length > 0) payload.animalsHandled = animalsHandled;
 
-        if (services.length > 0) {
-            payload.servicesProvided = services.map((s) => s.name);
-            payload.pricing = services.map(
-                (s): PricingEntry => ({ type: s.name, fee: Number(s.fee) })
-            );
-        }
+    if (services.length > 0) {
+        payload.servicesProvided = services.map((s) => s.name);
+        payload.pricing = services.map(
+            (s): PricingEntry => ({ type: s.name, fee: Number(s.fee) })
+        );
+    }
 
-        return payload;
+    payload.registration = {
+        enabled: registrationEnabled,
+        fee: registrationEnabled ? Number(registrationFee) || 0 : 0,
     };
 
+    return payload;
+};
+
 const handleSubmit = async () => {
-  setError(null);
-  setSaving(true);
-  try {
-    const payload = buildPayload();
-    const updatedData = await updateServices(payload);
-    
-    // Pass the changes back to the parent to merge them
-    onSuccess(updatedData); 
-    setIsOpen(false);
-  } catch (err) {
-    setError("Failed to update. Please try again.");
-    console.error(err);
-  } finally {
-    setSaving(false);
-  }
+    setError(null);
+
+    if (registrationEnabled && (!registrationFee || Number(registrationFee) < 0)) {
+        setError("Enter a valid registration fee");
+        return;
+    }
+
+    setSaving(true);
+    try {
+        const payload = buildPayload();
+        const updatedData = await updateServices(payload);
+        onSuccess(updatedData);
+        setIsOpen(false);
+    } catch (err) {
+        setError("Failed to update. Please try again.");
+        console.error(err);
+    } finally {
+        setSaving(false);
+    }
 };
 
     if (!isOpen) {
@@ -209,6 +226,42 @@ const handleSubmit = async () => {
                             />
                         </div>
                     </div>
+
+                    {/* Registration Fee — separate from Services & Pricing */}
+<div>
+    <h3 className="font-semibold text-sec-clr mb-3">New Patient Registration</h3>
+    <p className="text-xs text-gray-500 mb-3">
+        This fee is charged when staff register a new pet owner on your clinic, separate from treatment services.
+    </p>
+    <div className="flex items-center gap-3 mb-3">
+        <button
+            type="button"
+            onClick={() => setRegistrationEnabled(!registrationEnabled)}
+            className={`relative w-10 h-6 rounded-full transition ${
+                registrationEnabled ? "bg-green-500" : "bg-gray-200"
+            }`}
+        >
+            <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                    registrationEnabled ? "translate-x-4" : ""
+                }`}
+            />
+        </button>
+        <span className="text-sm text-sec-clr">
+            {registrationEnabled ? "Charging a registration fee" : "No registration fee"}
+        </span>
+    </div>
+    {registrationEnabled && (
+        <input
+            type="number"
+            min={0}
+            value={registrationFee}
+            onChange={(e) => setRegistrationFee(e.target.value)}
+            placeholder="Registration fee (₦)"
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full md:w-48"
+        />
+    )}
+</div>
 
                     {/* Business Hours */}
                     <div>
