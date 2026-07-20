@@ -346,7 +346,7 @@ export default function GetVisitRecords() {
                                             {/* Actions */}
                                             <td className="px-4 py-3 text-center">
                                                 <Link
-                                                    href={`/dashboard/records/${visit._id}`}
+                                                    href={`/dashboard/clinical/records/${visit._id}`}
                                                     className="inline-flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-800 transition-colors whitespace-nowrap"
                                                 >
                                                     View Details

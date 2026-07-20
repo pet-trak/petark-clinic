@@ -3,6 +3,7 @@
 "use client";
 
 import { useState } from "react";
+import { AxiosError } from "axios";
 import {
     registerPatient,
     ClinicPatientRecord,
@@ -20,6 +21,9 @@ const SPECIES_OPTIONS = [
 interface RegisterPatientProps {
     registrationFee: number;
     registrationEnabled: boolean;
+    // Present → registering a NEW pet for a known/resolved owner. Owner fields are hidden.
+    ownerId?: string;
+    ownerDisplayName?: string;
     prefillOwnerName?: string;
     prefillOwnerPhone?: string;
     onRegistered: (patient: ClinicPatientRecord) => void;
@@ -29,11 +33,14 @@ interface RegisterPatientProps {
 export default function RegisterPatient({
     registrationFee,
     registrationEnabled,
+    ownerId,
+    ownerDisplayName,
     prefillOwnerName = "",
     prefillOwnerPhone = "",
     onRegistered,
     onCancel,
 }: Readonly<RegisterPatientProps>) {
+    const [registrationNo, setRegistrationNo] = useState("");
     const [petName, setPetName] = useState("");
     const [species, setSpecies] = useState("");
     const [breed, setBreed] = useState("");
@@ -45,16 +52,27 @@ export default function RegisterPatient({
     const [gender, setGender] = useState<"male" | "female">("male");
     const [ownerName, setOwnerName] = useState(prefillOwnerName);
     const [ownerPhone, setOwnerPhone] = useState(prefillOwnerPhone);
+    const [ownerEmail, setOwnerEmail] = useState("");
     const [feeWaived, setFeeWaived] = useState(false);
     const [waiverReason, setWaiverReason] = useState("");
 
     const [registering, setRegistering] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const requiredFieldsFilled =
-        petName.trim() && species.trim() && ownerName.trim() && ownerPhone.trim();
+    const isKnownOwner = Boolean(ownerId);
+
+    const requiredFieldsFilled = isKnownOwner
+        ? Boolean(registrationNo.trim() && petName.trim() && species.trim())
+        : Boolean(
+              registrationNo.trim() &&
+              petName.trim() &&
+              species.trim() &&
+              ownerName.trim() &&
+              ownerPhone.trim()
+          );
 
     const resetForm = () => {
+        setRegistrationNo("");
         setPetName("");
         setSpecies("");
         setBreed("");
@@ -66,6 +84,7 @@ export default function RegisterPatient({
         setGender("male");
         setOwnerName("");
         setOwnerPhone("");
+        setOwnerEmail("");
         setFeeWaived(false);
         setWaiverReason("");
     };
@@ -74,7 +93,11 @@ export default function RegisterPatient({
         setError(null);
 
         if (!requiredFieldsFilled) {
-            setError("Pet name, species, owner name, and phone number are required.");
+            setError(
+                isKnownOwner
+                    ? "Registration number, pet name, and species are required."
+                    : "Registration number, pet name, species, owner name, and phone number are required."
+            );
             return;
         }
         if (feeWaived && !waiverReason.trim()) {
@@ -85,6 +108,7 @@ export default function RegisterPatient({
         setRegistering(true);
         try {
             const payload: RegisterPatientPayload = {
+                registrationNo: registrationNo.trim(),
                 petName: petName.trim(),
                 species,
                 breed: breed.trim() || undefined,
@@ -94,10 +118,15 @@ export default function RegisterPatient({
                 weight: weight ? Number(weight) : undefined,
                 weightUnit,
                 gender,
-                ownerName: ownerName.trim(),
-                ownerPhone: ownerPhone.trim(),
                 feeWaived,
                 waiverReason: feeWaived ? waiverReason.trim() : undefined,
+                ...(isKnownOwner
+                    ? { ownerId }
+                    : {
+                          ownerName: ownerName.trim(),
+                          ownerPhone: ownerPhone.trim(),
+                          ownerEmail: ownerEmail.trim() || undefined,
+                      }),
             };
 
             const patient = await registerPatient(payload);
@@ -105,9 +134,13 @@ export default function RegisterPatient({
             onRegistered(patient);
             toast.success("Patient registered successfully!");
         } catch (err) {
-            setError("Failed to register patient. Please try again.");
+            const message =
+                err instanceof AxiosError
+                    ? err.response?.data?.error ?? "Failed to register patient. Please try again."
+                    : "Failed to register patient. Please try again.";
+            setError(message);
             console.error(err);
-            toast.error("Failed to register patient. Please try again.");
+            toast.error(message);
         } finally {
             setRegistering(false);
         }
@@ -120,6 +153,24 @@ export default function RegisterPatient({
                     {error}
                 </div>
             )}
+
+            {isKnownOwner && (
+                <div className="mb-6 bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+                    Registering a new pet for <span className="font-semibold text-sec-clr">{ownerDisplayName ?? "this owner"}</span>
+                </div>
+            )}
+
+            {/* Registration Number */}
+            <div className="mb-6">
+                <h3 className="font-semibold text-sec-clr mb-3">Registration Number</h3>
+                <input
+                    value={registrationNo}
+                    onChange={(e) => setRegistrationNo(e.target.value)}
+                    placeholder="e.g. 001/27"
+                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-full md:w-1/2"
+                />
+                <p className="text-xs text-gray-400 mt-1">Must be unique for this clinic.</p>
+            </div>
 
             {/* Pet Details */}
             <div className="mb-6">
@@ -203,24 +254,32 @@ export default function RegisterPatient({
                 </div>
             </div>
 
-            {/* Owner Details */}
-            <div className="mb-6">
-                <h3 className="font-semibold text-sec-clr mb-3">Owner Details</h3>
-                <div className="grid gap-3 md:grid-cols-2">
-                    <input
-                        value={ownerName}
-                        onChange={(e) => setOwnerName(e.target.value)}
-                        placeholder="Owner name"
-                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                    />
-                    <input
-                        value={ownerPhone}
-                        onChange={(e) => setOwnerPhone(e.target.value)}
-                        placeholder="Phone number"
-                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                    />
+            {/* Owner Details — hidden entirely when the owner is already known */}
+            {!isKnownOwner && (
+                <div className="mb-6">
+                    <h3 className="font-semibold text-sec-clr mb-3">Owner Details</h3>
+                    <div className="grid gap-3 md:grid-cols-2">
+                        <input
+                            value={ownerName}
+                            onChange={(e) => setOwnerName(e.target.value)}
+                            placeholder="Owner name"
+                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                        />
+                        <input
+                            value={ownerPhone}
+                            onChange={(e) => setOwnerPhone(e.target.value)}
+                            placeholder="Phone number"
+                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                        />
+                        <input
+                            value={ownerEmail}
+                            onChange={(e) => setOwnerEmail(e.target.value)}
+                            placeholder="Email (optional — sends an account setup link)"
+                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm md:col-span-2"
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Registration Fee */}
             <div className="mb-6 bg-gray-50 rounded-lg p-4">

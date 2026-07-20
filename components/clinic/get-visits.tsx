@@ -85,7 +85,7 @@ export default function GetVisits() {
             <section className="space-y-4 w-full max-w-md">
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-sec-clr pry-ff">Recent Visits</h2>
-                    <Link href="/dashboard/records" className="text-sm text-sec-clr pry-ff cursor-pointer">
+                    <Link href="/dashboard/clinical/records" className="text-sm text-sec-clr pry-ff cursor-pointer">
                         View All
                     </Link>
                 </div>
@@ -135,7 +135,7 @@ export default function GetVisits() {
         <section className="space-y-4 w-full max-w-md">
             <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-sec-clr">Recent Visits</h2>
-                <Link href="/dashboard/records" className="text-sm text-sec-clr hover:text-sec-hover transition-colors">
+                <Link href="/dashboard/clinical/records" className="text-sm text-sec-clr hover:text-sec-hover transition-colors">
                     View All
                 </Link>
             </div>
@@ -160,6 +160,11 @@ export default function GetVisits() {
                                 </div>
                             </div>
 
+                             {/* Pet Info */}
+                            <div>
+                                <img src={pet?.photo || "/default-pet.png"} alt={pet?.name || "Pet"} className="w-10 h-10 rounded-full object-cover mr-3" />
+                            </div>
+
                             {/* Chief Complaint */}
                             {visit.soap?.subjective ? (
                                 <p className="text-sm font-medium text-sec-clr mb-1 line-clamp-1">
@@ -170,6 +175,8 @@ export default function GetVisits() {
                                     Veterinary Consultation
                                 </h3>
                             )}
+
+                           
 
                             <p className="text-sm text-gray-600 mb-3">
                                 Patient: {pet?.name || "Unknown"} ({pet?.breed || "Unknown breed"} · {pet?.species || "Unknown species"})

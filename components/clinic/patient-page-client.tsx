@@ -37,7 +37,7 @@ export default function PatientPageClient() {
     }, []);
 
     const handleProceedToVisit = (patient: ClinicPatientRecord) => {
-        router.push(`/clinic/visits/new?petId=${patient.pet._id}`);
+        router.push(`/dashboard/clinical/records/create-visit?patientId=${patient._id}`);
     };
 
     if (loading) {

@@ -24,8 +24,9 @@ export interface PatientPet {
 
 export interface PatientOwner {
     _id?: string;
-    fullname: string;
-    phoneNumber: string;
+    ownerName: string;
+    ownerPhone: string;
+    ownerEmail: string;
 }
 
 export interface ClinicPatientRecord {
@@ -39,13 +40,20 @@ export interface ClinicPatientRecord {
     owner?: PatientOwner;
 }
 
-// ─── Register: covers both existing pet (petId) and new pet (raw details) ──
+// ─── Register: existing pet (petId), known owner + new pet (ownerId), ─────
+// ─── or brand-new owner + pet (raw details) ────────────────────────────────
 
 export interface RegisterPatientPayload {
-    // Present → existing pet path. Absent → new pet path.
+    registrationNo: string; // required — staff-typed, unique per clinic
+
+    // Present → existing pet path. Takes priority over ownerId if both present.
     petId?: string;
 
-    // New pet path fields (required if petId is absent)
+    // Present (and petId absent) → known owner, new pet path
+    ownerId?: string;
+
+    // New pet fields — required when petId is absent.
+    // ownerName/ownerPhone only required when ownerId is ALSO absent (brand-new owner).
     petName?: string;
     species?: string;
     breed?: string;
@@ -57,8 +65,8 @@ export interface RegisterPatientPayload {
     gender?: "male" | "female";
     ownerName?: string;
     ownerPhone?: string;
+    ownerEmail?: string; // optional — triggers a claim-account email for a brand-new owner
 
-    // Shared, optional either way
     feeWaived?: boolean;
     waiverReason?: string;
     referredFrom?: ReferredFrom;
@@ -68,7 +76,7 @@ export async function registerPatient(
     payload: RegisterPatientPayload
 ): Promise<ClinicPatientRecord> {
     try {
-        const response = await api.post("/patients/register", payload);
+        const response = await api.post("/patients/register-new", payload);
         return response.data.data;
     } catch (error) {
         if (error instanceof AxiosError) {
@@ -141,6 +149,49 @@ export async function getAllPatients(
             );
         } else {
             console.error("Error fetching patients:", error);
+        }
+        throw error;
+    }
+}
+
+export interface ResolvedOwnerPet {
+    _id: string;
+    name: string;
+    species: string;
+    breed?: string;
+    age?: number;
+    ageUnit?: "years" | "months";
+    gender?: "male" | "female";
+}
+
+export interface ResolvedOwner {
+    _id: string;
+    fullname: string;
+    phoneNumber: string;
+    email: string;
+}
+
+export interface ResolveOwnerResult {
+    owner: ResolvedOwner;
+    pets: ResolvedOwnerPet[];
+}
+
+export async function resolveOwnerByEmail(
+    email: string
+): Promise<ResolveOwnerResult> {
+    try {
+        const response = await api.get("/owners/resolve", {
+            params: { email },
+        });
+        return response.data.data;
+    } catch (error) {
+        if (error instanceof AxiosError) {
+            console.error(
+                "Error resolving owner:",
+                error.response?.data || error.message
+            );
+        } else {
+            console.error("Error resolving owner:", error);
         }
         throw error;
     }

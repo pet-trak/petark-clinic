@@ -7,7 +7,7 @@
 "use client";
 
 import { useState } from "react";
-import RegisterPatient from "@/components/clinic/register-patient";
+import PatientRegistrationFlow from "@/components/clinic/patient-registration-flow";
 import SearchPatient from "@/components/clinic/search-patient";
 import { ClinicPatientRecord } from "@/lib/clinic-patient";
 
@@ -72,7 +72,7 @@ export default function PatientComponent({
                     onRegisterAsNew={handleRegisterAsNew}
                 />
             ) : (
-                <RegisterPatient
+                <PatientRegistrationFlow
                     registrationFee={registrationFee}
                     registrationEnabled={registrationEnabled}
                     prefillOwnerName={prefill.name}
