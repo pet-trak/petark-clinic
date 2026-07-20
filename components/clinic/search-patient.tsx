@@ -201,9 +201,9 @@ export default function SearchPatient({
                                             {r.pet?.age ? `${r.pet.age} ${r.pet.ageUnit ?? "yrs"}` : "-"}
                                         </td>
                                         <td className="py-2 pr-4 text-gray-600">{r.pet?.color || "-"}</td>
-                                        <td className="py-2 pr-4 text-gray-600">{r.owner?.ownerName || "-"}</td>
-                                        <td className="py-2 pr-4 text-gray-600">{r.owner?.ownerPhone || "-"}</td>
-                                        <td className="py-2 pr-4 text-gray-600">{r.owner?.ownerEmail || "-"}</td>
+                                        <td className="py-2 pr-4 text-gray-600">{r.owner?.fullname || "-"}</td>
+                                        <td className="py-2 pr-4 text-gray-600">{r.owner?.phoneNumber || "-"}</td>
+                                        <td className="py-2 pr-4 text-gray-600">{r.owner?.email || "-"}</td>
                                         <td className="py-2 pr-4 text-right">
                                             <button
                                                 onClick={(e) => {

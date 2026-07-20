@@ -24,9 +24,9 @@ export interface PatientPet {
 
 export interface PatientOwner {
     _id?: string;
-    ownerName: string;
-    ownerPhone: string;
-    ownerEmail: string;
+    fullname: string;
+    phoneNumber: string;
+    email?: string;
 }
 
 export interface ClinicPatientRecord {
@@ -63,9 +63,10 @@ export interface RegisterPatientPayload {
     weight?: number;
     weightUnit?: "kg" | "lbs";
     gender?: "male" | "female";
-    ownerName?: string;
-    ownerPhone?: string;
-    ownerEmail?: string; // optional — triggers a claim-account email for a brand-new owner
+    
+    fullname?: string;
+    phoneNumber?: string;
+    email?: string;
 
     feeWaived?: boolean;
     waiverReason?: string;

@@ -24,7 +24,7 @@ interface RegisterPatientProps {
     // Present → registering a NEW pet for a known/resolved owner. Owner fields are hidden.
     ownerId?: string;
     ownerDisplayName?: string;
-    prefillOwnerName?: string;
+    prefillOwnerFullname?: string;
     prefillOwnerPhone?: string;
     onRegistered: (patient: ClinicPatientRecord) => void;
     onCancel?: () => void;
@@ -35,7 +35,7 @@ export default function RegisterPatient({
     registrationEnabled,
     ownerId,
     ownerDisplayName,
-    prefillOwnerName = "",
+    prefillOwnerFullname = "",
     prefillOwnerPhone = "",
     onRegistered,
     onCancel,
@@ -50,7 +50,7 @@ export default function RegisterPatient({
     const [weight, setWeight] = useState("");
     const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
     const [gender, setGender] = useState<"male" | "female">("male");
-    const [ownerName, setOwnerName] = useState(prefillOwnerName);
+    const [ownerFullname, setOwnerFullname] = useState(prefillOwnerFullname);
     const [ownerPhone, setOwnerPhone] = useState(prefillOwnerPhone);
     const [ownerEmail, setOwnerEmail] = useState("");
     const [feeWaived, setFeeWaived] = useState(false);
@@ -67,7 +67,7 @@ export default function RegisterPatient({
               registrationNo.trim() &&
               petName.trim() &&
               species.trim() &&
-              ownerName.trim() &&
+              ownerFullname.trim() &&
               ownerPhone.trim()
           );
 
@@ -82,7 +82,7 @@ export default function RegisterPatient({
         setWeight("");
         setWeightUnit("kg");
         setGender("male");
-        setOwnerName("");
+        setOwnerFullname("");
         setOwnerPhone("");
         setOwnerEmail("");
         setFeeWaived(false);
@@ -123,9 +123,9 @@ export default function RegisterPatient({
                 ...(isKnownOwner
                     ? { ownerId }
                     : {
-                          ownerName: ownerName.trim(),
-                          ownerPhone: ownerPhone.trim(),
-                          ownerEmail: ownerEmail.trim() || undefined,
+                          fullname: ownerFullname.trim(),
+                          phoneNumber: ownerPhone.trim(),
+                          email: ownerEmail.trim() || undefined,
                       }),
             };
 
@@ -260,8 +260,8 @@ export default function RegisterPatient({
                     <h3 className="font-semibold text-sec-clr mb-3">Owner Details</h3>
                     <div className="grid gap-3 md:grid-cols-2">
                         <input
-                            value={ownerName}
-                            onChange={(e) => setOwnerName(e.target.value)}
+                            value={ownerFullname}
+                            onChange={(e) => setOwnerFullname(e.target.value)}
                             placeholder="Owner name"
                             className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
                         />

@@ -20,7 +20,7 @@ type Mode = "search" | "resolved" | "new-pet-for-owner" | "new-owner";
 interface PatientRegistrationFlowProps {
     registrationFee: number;
     registrationEnabled: boolean;
-    prefillOwnerName?: string;
+    prefillOwnerFullname?: string;
     prefillOwnerPhone?: string;
     onRegistered: (patient: ClinicPatientRecord) => void;
     onCancel?: () => void;
@@ -29,7 +29,7 @@ interface PatientRegistrationFlowProps {
 export default function PatientRegistrationFlow({
     registrationFee,
     registrationEnabled,
-    prefillOwnerName,
+    prefillOwnerFullname,
     prefillOwnerPhone,
     onRegistered,
     onCancel,
@@ -172,7 +172,7 @@ export default function PatientRegistrationFlow({
                 <RegisterPatient
                     registrationFee={registrationFee}
                     registrationEnabled={registrationEnabled}
-                    prefillOwnerName={prefillOwnerName}
+                    prefillOwnerFullname={prefillOwnerFullname}
                     prefillOwnerPhone={prefillOwnerPhone}
                     onRegistered={onRegistered}
                     onCancel={onCancel}
