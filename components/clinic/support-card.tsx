@@ -17,11 +17,11 @@ export default function SupportCard() {
                     </div>
                     <p className="text-gray-600 mb-4">Send us an email and we&apos;ll get back to you within 24 hours.</p>
                     <a 
-                        href="mailto:usepetark@gmail.com"
+                        href="mailto:hello@usepetark.com"
                         className="inline-flex items-center gap-2 text-acc-clr font-medium hover:underline"
                     >
                         <Mail className="w-4 h-4" />
-                        usepetark@gmail.com
+                        hello@usepetark.com
                     </a>
                 </div>
 
