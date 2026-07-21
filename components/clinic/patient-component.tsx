@@ -75,7 +75,7 @@ export default function PatientComponent({
                 <PatientRegistrationFlow
                     registrationFee={registrationFee}
                     registrationEnabled={registrationEnabled}
-                    prefillOwnerName={prefill.name}
+                    prefillOwnerFullname={prefill.name}
                     prefillOwnerPhone={prefill.phone}
                     onRegistered={handleRegistered}
                     onCancel={() => setTab("existing")}
