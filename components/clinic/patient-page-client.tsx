@@ -12,6 +12,7 @@ import { getUser, User } from "@/lib/user";
 import PatientComponent from "@/components/clinic/patient-component";
 import { ClinicPatientRecord } from "@/lib/clinic-patient";
 import { Loader2 } from "lucide-react";
+import { getCurrentVisitForPatient } from "@/lib/visit";
 
 export default function PatientPageClient() {
     const router = useRouter();
@@ -36,8 +37,18 @@ export default function PatientPageClient() {
         fetchProfile();
     }, []);
 
-    const handleProceedToVisit = (patient: ClinicPatientRecord) => {
-        router.push(`/dashboard/clinical/records/create-visit?patientId=${patient._id}`);
+    const handleProceedToVisit = async (patient: ClinicPatientRecord) => {
+        try {
+            const currentVisit = await getCurrentVisitForPatient(patient._id);
+            if (currentVisit) {
+                router.push(`/dashboard/clinical/records/${currentVisit._id}`);
+            } else {
+                router.push(`/dashboard/clinical/records/create-visit?patientId=${patient._id}`);
+            }
+        } catch (err) {
+            console.error(err);
+            router.push(`/dashboard/clinical/records/create-visit?patientId=${patient._id}`);
+        }
     };
 
     if (loading) {

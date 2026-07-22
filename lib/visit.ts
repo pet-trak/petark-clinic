@@ -13,7 +13,6 @@ interface Vitals {
     activity: "active" | "lethargic" | "hyperactive" | "normal" | null;
 }
 
-
 interface Billing {
     professionalFee: number;
     vat: number;
@@ -103,7 +102,8 @@ interface GetVisitResponse {
 }
 
 export interface CreateVisitPayload {
-    appointmentId: string;
+    appointmentId?: string;
+    clinicPatientId?: string;
     vetId?: string;
     servicesProvided?: string[];
     vitals?: Partial<Vitals>;
@@ -265,5 +265,19 @@ export async function getPetTrends(petId: string): Promise<PetTrendsResponse['da
             throw new Error(error.response?.data?.message || "Failed to fetch pet trends");
         }
         throw new Error("An unexpected error occurred while fetching trends");
+    }
+}
+
+export async function getCurrentVisitForPatient(clinicPatientId: string): Promise<ApiVisitResponse | null> {
+    try {
+        const response = await api.get<{ status: string; data: ApiVisitResponse | null }>(
+            `/visit/patient/${clinicPatientId}/current`
+        );
+        return response.data.data;
+    } catch (error) {
+        if (axiosError.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || "Failed to check for an existing visit");
+        }
+        throw new Error("An unexpected error occurred while checking for an existing visit");
     }
 }

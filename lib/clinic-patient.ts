@@ -197,3 +197,17 @@ export async function resolveOwnerByEmail(
         throw error;
     }
 }
+
+export async function getClinicPatientById(id: string): Promise<ClinicPatientRecord> {
+    try {
+        const response = await api.get(`/patients/${id}`);
+        return response.data.data;
+    } catch (error) {
+        if (error instanceof AxiosError) {
+            console.error("Error fetching patient:", error.response?.data || error.message);
+        } else {
+            console.error("Error fetching patient:", error);
+        }
+        throw error;
+    }
+}
