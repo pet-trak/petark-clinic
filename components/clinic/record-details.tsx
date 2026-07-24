@@ -6,6 +6,7 @@ import type { Visit } from "@/lib/visit";
 import { getUser, type ClinicService } from "@/lib/user";
 import UpdateVitals from "@/components/clinic/update-vitals";
 import CompleteVisitBtn from "@/components/clinic/complete-visit-btn";
+import ReferralBtn from "@/components/clinic/referral-btn";
 import PetTrendsChart from "@/components/clinic/pet-trends-chart";
 import TreatmentTimeline from "@/components/clinic/treatment-timeline";
 import {
@@ -264,6 +265,7 @@ export default function RecordDetails({ visitId }: Readonly<RecordDetailsProps>)
                                 <Pencil size={13} />
                                 Edit Vitals
                             </button>
+                            {visit.petId && <ReferralBtn petId={visit.petId} />}
                             <CompleteVisitBtn visit={visit} onComplete={handleSaved} />
                         </div>
                     </div>
