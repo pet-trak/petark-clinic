@@ -164,7 +164,7 @@ export default function ReferralBtn({ petId, onReferred }: Readonly<ReferralBtnP
                                             value={query}
                                             onChange={(e) => setQuery(e.target.value)}
                                             placeholder="Search clinics by name or service..."
-                                            className="w-full rounded-lg border border-sec-clr/20 py-2 pl-9 pr-3 text-sm text-sec-clr outline-none focus:border-pry-clr"
+                                            className="w-full rounded-lg border border-sec-clr/20 py-2 pl-9 pr-3 text-sm text-sec-clr outline-none focus:border-acc-clr"
                                         />
                                     </div>
 
@@ -193,7 +193,7 @@ export default function ReferralBtn({ petId, onReferred }: Readonly<ReferralBtnP
                                                     </span>
                                                     {clinic.address && (
                                                         <span className="block text-xs text-sec-clr/50">
-                                                            {clinic.address}
+                                                            {clinic.address.street}, {clinic.address.city}
                                                         </span>
                                                     )}
                                                 </button>
@@ -246,7 +246,7 @@ export default function ReferralBtn({ petId, onReferred }: Readonly<ReferralBtnP
                                 type="button"
                                 onClick={handleSubmit}
                                 disabled={submitting}
-                                className="inline-flex items-center gap-2 rounded-lg bg-pry-clr px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
+                                className="inline-flex items-center gap-2 rounded-lg bg-acc-clr px-4 py-2 text-sm font-medium text-pry-clr transition hover:opacity-90 disabled:opacity-60"
                             >
                                 {submitting && (
                                     <Loader2 className="h-4 w-4 animate-spin" />

@@ -171,7 +171,19 @@ export interface ClinicSearchResult {
     _id: string;
     clinicName: string;
     email: string;
-    address?: string;
+    address?: {
+        street?: string;
+        city?: string;
+        state?: string;
+        country?: string;
+        zipCode?: string;
+    };
+    phoneNumber?: string;
+    licenseNumber?: string;
+    status?: string;
+    startingTime?: string;
+    closingTime?: string;
+    daysOpen?: string[];
     serviceProvided?: string;
     animalsHandled?: string;
 }
